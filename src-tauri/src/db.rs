@@ -76,10 +76,12 @@ pub fn init_db(app_handle: &AppHandle) -> Result<DbState, String> {
 /// Inserts the default categories if they do not already exist.
 pub fn create_default_data(conn: &Connection) {
     let defaults = [
-        ("snack", "Snack", "#e8a735"),
+        ("cake-sale", "Cakes salés", "#e8a735"),
+        ("sandwichs", "Sandwiches/Paninis", "#9a8441"),
         ("boisson-sans-alcool", "Boisson sans alcool", "#3b82f6"),
         ("alcool", "Alcool", "#8b5cf6"),
         ("sucreries", "Sucreries", "#e84393"),
+        ("crepes", "Crêpes", "#edff00"),
         ("consignes", "Consignes", "#6b7280"),
     ];
     for (id, label, color) in &defaults {
@@ -90,27 +92,44 @@ pub fn create_default_data(conn: &Connection) {
         .expect("Failed to insert default category");
     }
 
-    let default_products: [(&str, &str, i64, &str); 20] = [
+    let default_products: [(&str, &str, i64, &str); 31] = [
         ("the", "Thé", 100, "boisson-sans-alcool"),
         ("cafe", "Café", 100, "boisson-sans-alcool"),
         ("soda", "Soda", 200, "boisson-sans-alcool"),
         ("jus-de-fruit", "Jus de fruit", 200, "boisson-sans-alcool"),
+        ("limonade", "Limonade", 200, "boisson-sans-alcool"),
+
         ("biere-pichet", "Bière (pichet)", 1200, "alcool"),
         ("biere-25cl", "Bière (25cl)", 300, "alcool"),
-        ("cidre-doux", "Cidre (doux)", 300, "alcool"),
-        ("cidre-brut", "Cidre (brut)", 300, "alcool"),
-        ("consigne-verre", "Consigne verre", 100, "consignes"),
-        ("consigne-pichet", "Consigne pichet", 500, "consignes"),
+        ("cidre-doux", "Cidre (DOUX)", 300, "alcool"),
+        ("cidre-brut", "Cidre (BRUT)", 300, "alcool"),
+
+        ("consigne-verre", "Consigne Verre", 100, "consignes"),
+        ("consigne-pichet", "Consigne Pichet", 500, "consignes"),
+        ("retour-consigne-verre", "RETOUR Consigne Verre", -100, "consignes"),
+        ("retour-consigne-pichet", "RETOUR Consigne Pichet", -500, "consignes"),
+
         ("bonbon", "Bonbon/M&Ms/Twix", 100, "sucreries"),
-        ("part-de-gateau", "Part de gâteau", 100, "sucreries"),
-        ("crepe-nature", "Crêpe nature", 200, "sucreries"),
-        ("crepe-sucre", "Crêpe au sucre", 250, "sucreries"),
-        ("crepe-confiture", "Crêpe à la confiture", 350, "sucreries"),
-        ("crepe-caramel", "Crêpe au caramel", 350, "sucreries"),
-        ("crepe-nutella", "Crêpe au Nutella", 350, "sucreries"),
-        ("cake-sale", "Cake salé", 100, "snack"),
-        ("sandwich", "Sandwich", 400, "snack"),
-        ("panini", "Panini", 400, "snack"),
+        ("cake-sucre", "Cake sucré", 100, "sucreries"),
+        ("cake-pomme-amandes", "Cake Pomme Amandes", 100, "sucreries"),
+        ("cake-pomme-canelle", "Cake Pomme Canelles", 100, "sucreries"),
+        ("cake-pomme-chocolat", "Cake Pomme Chocolat", 100, "sucreries"),
+
+        ("crepe-nature", "Crêpe Nature", 200, "crepes"),
+        ("crepe-sucre", "Crêpe Sucre", 250, "crepes"),
+        ("crepe-confiture", "Crêpe Confiture", 350, "crepes"),
+        ("crepe-caramel", "Crêpe Caramel", 350, "crepes"),
+        ("crepe-nutella", "Crêpe Nutella", 350, "crepes"),
+        ("crepe-speculoos", "Crêpe Spéculoos", 350, "crepes"),
+
+        ("cake-tomate-mozza", "Cake Tomate Mozza", 100, "cake-sale"),
+        ("cake-chorizo-poivrons", "Cake Chorizo Poivrons", 100, "cake-sale"),
+        ("cake-lardons-olives", "Cake Lardons Olives", 100, "cake-sale"),
+
+        ("sandwich-jambon-fromage", "Sandwich Jambon Fromage", 400, "sandwichs"),
+        ("sandwich-fromage-salade", "Sandwich Fromage Salade", 400, "sandwichs"),
+        ("panini-3-fromages", "Panini 3 fromages", 400, "sandwichs"),
+        ("panini-jambon-fromage", "Panini Jambon Fromage", 400, "sandwichs"),
     ];
     for (id, name, price, category_id) in &default_products {
         conn.execute(
