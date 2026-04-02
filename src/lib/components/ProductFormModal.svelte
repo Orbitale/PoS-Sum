@@ -16,10 +16,10 @@
 
 	let { product, categories, onSave, onCancel }: Props = $props();
 
-	let name = $state(product?.name ?? '');
-	let priceInput = $state(product ? (product.price / 100).toFixed(2).replace('.', ',') : '');
-	let category_id = $state(product?.category_id ?? categories[0]?.id ?? '');
-	let available = $state(product?.available ?? true);
+	let name = $derived(product?.name ?? '');
+	let priceInput = $derived(product ? (product.price / 100).toFixed(2).replace('.', ',') : '');
+	let category_id = $derived(product?.category_id ?? categories[0]?.id ?? '');
+	let available = $derived(product?.available ?? true);
 	let isSubmitting = $state(false);
 
 	let priceCents = $derived.by(() => {

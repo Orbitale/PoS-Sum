@@ -10,9 +10,9 @@
 
 	let { category, onSave, onCancel }: Props = $props();
 
-	let id = $state(category?.id ?? '');
-	let label = $state(category?.label ?? '');
-	let color = $state(category?.color ?? '#6b7280');
+	let id = $derived(category?.id ?? '');
+	let label = $derived(category?.label ?? '');
+	let color = $derived(category?.color ?? '#6b7280');
 	let isSubmitting = $state(false);
 
 	let isEditing = $derived(category !== null);
