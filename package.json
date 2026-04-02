@@ -1,7 +1,7 @@
 {
 	"name": "pos_sum",
 	"version": "1.0.2",
-	"description": "",
+	"description": "A lightweight point-of-sale application for desktop or mobile",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",

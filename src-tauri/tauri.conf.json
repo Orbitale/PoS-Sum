@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "PoS Sum",
+  "productName": "PoS-Sum",
   "version": "1.0.2",
   "identifier": "com.orbitale.pos-sum",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Pos Sum",
+        "title": "PoS Sum",
         "width": 900,
         "height": 700
       }
