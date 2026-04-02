@@ -9,7 +9,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
-
     super.onCreate(savedInstanceState)
 
     // Allow content to extend under the system bars
