@@ -1,6 +1,6 @@
 [package]
 name = "pos_sum"
-version = "1.0.1"
+version = "1.0.2"
 description = "An lightweight point-of-sale application for desktop or mobile"
 authors = ["Alex \"Pierstoval\" Rock <pierstoval@gmail.com>"]
 edition = "2021"
