@@ -15,4 +15,4 @@ git add .
 git cm -m "v$tag" --allow-empty
 git tag -m "v$tag" "v$tag"
 git push origin main --tags
-gh release create "v$tag" --prerelease --title "v$tag" --notes ""
+gh release create "v$tag" --prerelease --title "v$tag" --notes "v$tag\n\nSee the assets below to download the installer for your platform."
