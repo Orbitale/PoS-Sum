@@ -28,7 +28,7 @@
 	});
 
 	let canSave = $derived(
-		!isSubmitting && name.trim().length > 0 && priceCents > 0 && category_id.length > 0
+		!isSubmitting && name.trim().length > 0 && !isNaN(priceCents) && category_id.length > 0
 	);
 
 	function handleSubmit() {
