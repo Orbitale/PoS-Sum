@@ -2706,7 +2706,7 @@ dependencies = [
 
 [[package]]
 name = "pos_sum"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "chrono",
  "rusqlite",
