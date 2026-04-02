@@ -1,4 +1,6 @@
-# POS prototype
+# PoS (Point-of-Sale) prototype
+
+Made with Tauri and Svelte.
 
 ## Installation
 
@@ -21,26 +23,5 @@ Run the `pnpm run tauri dev` command to start working on the project.
 
 Run the `pnpm run tauri build` command to build the project for production.
 
-- The app as a simple executable file is in the `src-tauri/target/release/pos` file (or `pos.exe` on Windows)
+- The app as a simple executable file is in the `src-tauri/target/release/pos_sum` file (or `pos_sum.exe` on Windows)
 - Several installers for your platform are located in the `src-tauri/target/release/bundle/` directory.
-
-## Showcase
-
-<details>
-<summary>Click to expand</summary>
-
-![](./docs/Sales.png)
-
-![](./docs/Products.png)
-
-![](./docs/Product_add.png)
-
-![](./docs/Categories.png)
-
-![](./docs/Categories_add.png)
-
-![](./docs/Orders.png)
-
-![](./docs/Dashboard.png)
-
-</details>
