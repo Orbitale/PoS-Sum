@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { t } from '$lib/i18n';
-	import { Offcanvas } from 'bootstrap';
 
 	const links = [
 		{ href: '/', labelKey: 'nav.sales' },
@@ -11,16 +10,16 @@
 		{ href: '/dashboard', labelKey: 'nav.dashboard' },
 		{ href: '/configuration', labelKey: 'nav.configuration' }
 	];
+	
+	let offcanvas: HTMLElement;
 
 	function isActive(href: string): boolean {
 		return href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);
 	}
 
 	function closeMenu() {
-		const el = document.getElementById('navOffcanvas');
-		if (el) {
-			Offcanvas.getInstance(el)?.hide();
-		}
+		console.info('Close offcanvas', offcanvas);
+		window?.bootstrap?.Offcanvas?.getInstance(offcanvas)?.hide();
 	}
 </script>
 
@@ -38,10 +37,11 @@
 		</button>
 
 		<div
-			class="offcanvas-md offcanvas-start"
+			class="offcanvas offcanvas-start"
 			tabindex="-1"
 			id="navOffcanvas"
 			aria-labelledby="navOffcanvasLabel"
+			bind:this={offcanvas}
 		>
 			<div class="offcanvas-header">
 				<h5 class="offcanvas-title" id="navOffcanvasLabel">Menu</h5>
