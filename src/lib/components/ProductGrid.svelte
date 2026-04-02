@@ -79,8 +79,8 @@
 	{#each displayItems as item (item.type === 'product' ? item.product.id : item.category.id)}
 		{#if item.type === 'category'}
 			<button
-				class="gridBtn btn fw-semibold rounded-3"
-				style="background: {item.category.color}; border: 5px dashed rgba(255,255,255,0.4);"
+				class="gridBtn btn fw-semibold rounded-3 category"
+				style="background: {item.category.color};"
 				onclick={() => (expandedCategoryId = item.category.id)}
 			>
 				<span>{item.category.label}</span>
@@ -103,12 +103,17 @@
 <style>
 		/* btn d-flex flex-column align-items-center justify-content-center */
 	.gridBtn {
-      min-height: 80px;
+			min-height: 80px;
 			color: white;
 			overflow: hidden;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
 			justify-content: center;
+	}
+	.gridBtn.category {
+			border-width: 8px;
+			border-color: rgba(255,255,255,0.7);
+			border-style: dashed;
 	}
 </style>
