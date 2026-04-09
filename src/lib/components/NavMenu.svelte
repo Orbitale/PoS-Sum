@@ -10,8 +10,19 @@
 		{ href: '/dashboard', labelKey: 'nav.dashboard' },
 		{ href: '/configuration', labelKey: 'nav.configuration' }
 	];
-	
+
 	let offcanvas: HTMLElement;
+
+	let isDarkMode: boolean = $state(false);
+
+	$effect(() => {
+		changeMode(isDarkMode);
+	});
+
+	function changeMode(newMode: boolean) {
+		isDarkMode = newMode;
+		window?.document.body.setAttribute('data-bs-theme', isDarkMode ? 'dark' : 'light');
+	}
 
 	function isActive(href: string): boolean {
 		return href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);
@@ -70,5 +81,17 @@
 				</ul>
 			</div>
 		</div>
+
+		<div>
+			<button class="btn btn-outline-secondary" type="button" onclick="{() => changeMode(!isDarkMode)}">
+				{isDarkMode ? '☀' : '🌙'}
+			</button>
+		</div>
 	</div>
 </nav>
+
+<style>
+	.navbar-toggler {
+		background: #bbb;
+	}
+</style>

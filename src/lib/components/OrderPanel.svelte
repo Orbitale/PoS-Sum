@@ -17,36 +17,40 @@
 	let isEmpty = $derived(items.length === 0);
 </script>
 
-<aside class="d-flex flex-column h-100 border-start order-panel">
+<aside class="d-flex flex-column border-start order-panel">
 	<h2 class="m-0 p-3 fs-5 border-bottom">{$t('order.currentOrder')}</h2>
 
 	{#if isEmpty}
 		<p class="p-4 text-muted text-center">{$t('order.emptyMessage')}</p>
 	{:else}
-		<ul class="list-unstyled m-0 flex-grow-1 overflow-auto">
-			{#each items as item (item.product.id)}
-				<li class="d-flex align-items-center justify-content-between gap-2 px-3 py-2 border-bottom">
-					<div class="d-flex flex-column">
-						<span class="fw-semibold" style="font-size: 0.95rem;">{item.product.name}</span>
-						<span class="small text-muted">{formatPrice(item.product.price)}</span>
-					</div>
-					<div class="d-flex align-items-center gap-1">
-						<button
-							class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center fw-bold"
-							style="width: 32px; height: 32px; padding: 0; font-size: 1.1rem;"
-							onclick={() => onDecrease(item.product.id)}
-						>-</button>
-						<span class="fw-semibold text-center" style="min-width: 24px;">{item.quantity}</span>
-						<button
-							class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center fw-bold"
-							style="width: 32px; height: 32px; padding: 0; font-size: 1.1rem;"
-							onclick={() => onIncrease(item.product.id)}
-						>+</button>
-					</div>
-					<span class="fw-semibold text-end" style="min-width: 60px;">{formatPrice(item.product.price * item.quantity)}</span>
-				</li>
-			{/each}
-		</ul>
+		<table class="table table-bordered">
+			<tbody>
+				{#each items as item (item.product.id)}
+					<tr>
+						<td class="col-sm-7">
+							<span class="fw-semibold" style="font-size: 0.95rem;">{item.product.name}</span>
+							<span class="small text-muted">{formatPrice(item.product.price)}</span>
+						</td>
+						<td class="d-flex align-items-center gap-1">
+							<button
+								class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center fw-bold"
+								style="width: 32px; height: 32px; padding: 0; font-size: 1.1rem;"
+								onclick={() => onDecrease(item.product.id)}
+							>&minus;</button>
+							<span class="fw-semibold text-center" style="min-width: 24px;">{item.quantity}</span>
+							<button
+								class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center fw-bold"
+								style="width: 32px; height: 32px; padding: 0; font-size: 1.1rem;"
+								onclick={() => onIncrease(item.product.id)}
+							>&plus;</button>
+						</td>
+						<td class="col-sm-3 fw-semibold text-end">
+							{formatPrice(item.product.price * item.quantity)}
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
 	{/if}
 
 	<div class="border-top border-2 p-3 mt-auto">
@@ -64,7 +68,15 @@
 <style>
 	@media (max-width:767px) {
 		.order-panel {
-				max-height: 55%;
+			height: 30%;
+			width: 100%;
 		}
 	}
+	@media (min-width:768px) {
+		.order-panel {
+			height: 100%;
+			width: 50%;
+		}
+	}
+
 </style>

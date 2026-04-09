@@ -14,7 +14,9 @@
       {
         "title": "PoS Sum",
         "width": 900,
-        "height": 700
+        "height": 700,
+        "minWidth": 600,
+        "minHeight": 700
       }
     ],
     "security": {

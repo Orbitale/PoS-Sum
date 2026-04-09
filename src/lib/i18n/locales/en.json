@@ -28,6 +28,7 @@
 		"change": "Change:",
 		"cancel": "Cancel",
 		"confirm": "Confirm",
+		"numberOfProducts": "Number of products",
 		"submitting": "Submitting..."
 	},
 	"productForm": {
