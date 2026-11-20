@@ -1,9 +1,8 @@
 <script lang="ts">
-	import type { Product, Category } from '$lib/types';
-	import { formatPrice } from '$lib/utils/format';
-	import { groupedCategories } from '$lib/stores/category-visibility';
-	import { t } from '$lib/i18n';
-
+	import type { Product, Category } from '#lib/types.ts';
+	import { formatPrice } from '#lib/utils/format.ts';
+	import { groupedCategories } from '#lib/stores/category-visibility.ts';
+	import { t } from '#lib/i18n/index.ts';
 
 	interface Props {
 		products: Product[];

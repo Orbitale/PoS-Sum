@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { confirm } from '$lib/confirm.svelte';
-	import { api_call } from '$lib/api';
-	import type { Category, CreateCategoryPayload, UpdateCategoryPayload } from '$lib/types';
-	import CategoryFormModal from '$lib/components/CategoryFormModal.svelte';
-	import { t } from '$lib/i18n';
+	import { confirm } from '#lib/confirm.svelte.ts';
+	import { api_call } from '#lib/api.ts';
+	import type { Category, CreateCategoryPayload, UpdateCategoryPayload } from '#lib/types.ts';
+	import CategoryFormModal from '#lib/components/CategoryFormModal.svelte';
+	import { t } from '#lib/i18n/index.ts';
 
 	let categories = $state<Category[]>([]);
 	let editingCategory = $state<Category | null>(null);

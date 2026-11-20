@@ -1,4 +1,6 @@
-# PoS (Point-of-Sale) prototype
+# PoS-Sum, lightweight offline point of sale
+
+Compatible with Android, Windows and Linux.
 
 Made with Tauri and Svelte.
 

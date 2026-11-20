@@ -1,4 +1,4 @@
-import { APP_TARGET } from '$lib/api';
+import { APP_TARGET } from '#lib/api.ts';
 
 export async function downloadCsv(filename: string, csv: string): Promise<void> {
 	if (APP_TARGET === 'tauri') {

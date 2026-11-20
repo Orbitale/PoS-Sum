@@ -2,8 +2,8 @@
 	import 'bootstrap/dist/css/bootstrap.min.css';
 	import bootstrapJs from 'bootstrap/dist/js/bootstrap.bundle.min.js?url';
 
-	import NavMenu from '$lib/components/NavMenu.svelte';
-	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
+	import NavMenu from '#lib/components/NavMenu.svelte';
+	import ConfirmModal from '#lib/components/ConfirmModal.svelte';
 	import type { Snippet } from 'svelte';
 
 	let { children }: { children: Snippet } = $props();
@@ -11,7 +11,7 @@
 
 <svelte:head>
 	<link rel="icon" href="/favicon.png" />
-	<script src="{bootstrapJs}"></script>
+	<script src={bootstrapJs}></script>
 </svelte:head>
 
 <NavMenu />

@@ -1,11 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { confirm } from '$lib/confirm.svelte';
-	import { api_call } from '$lib/api';
-	import type { Product, Category, CreateProductPayload, UpdateProductPayload } from '$lib/types';
-	import { formatPrice } from '$lib/utils/format';
-	import ProductFormModal from '$lib/components/ProductFormModal.svelte';
-	import { t } from '$lib/i18n';
+	import { confirm } from '#lib/confirm.svelte.ts';
+	import { api_call } from '#lib/api.ts';
+	import type {
+		Product,
+		Category,
+		CreateProductPayload,
+		UpdateProductPayload
+	} from '#lib/types.ts';
+	import { formatPrice } from '#lib/utils/format.ts';
+	import ProductFormModal from '#lib/components/ProductFormModal.svelte';
+	import { t } from '#lib/i18n/index.ts';
 
 	let products = $state<Product[]>([]);
 	let categories = $state<Category[]>([]);

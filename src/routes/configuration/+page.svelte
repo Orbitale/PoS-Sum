@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { api_call } from '$lib/api';
-	import { confirm } from '$lib/confirm.svelte';
-	import type { AppVersion, Category } from '$lib/types';
-	import { t, locale, availableLocales } from '$lib/i18n';
+	import { api_call } from '#lib/api.ts';
+	import { confirm } from '#lib/confirm.svelte.ts';
+	import type { AppVersion, Category } from '#lib/types.ts';
+	import { t, locale, availableLocales } from '#lib/i18n/index.ts';
 	import {
 		groupedCategories,
 		toggleCategoryGrouped,
 		groupAllCategories,
 		ungroupAllCategories
-	} from '$lib/stores/category-visibility';
+	} from '#lib/stores/category-visibility.ts';
 
 	let dbPath = $state<string | null>(null);
 	let appVersion = $state<AppVersion | null>(null);

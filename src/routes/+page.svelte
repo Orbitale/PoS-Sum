@@ -1,11 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { api_call } from '$lib/api';
-	import type { Product, Category, CartItem, OrderWithItems, CreateOrderPayload } from '$lib/types';
-	import ProductGrid from '$lib/components/ProductGrid.svelte';
-	import OrderPanel from '$lib/components/OrderPanel.svelte';
-	import CheckoutModal from '$lib/components/CheckoutModal.svelte';
-	import { t } from '$lib/i18n';
+	import { api_call } from '#lib/api.ts';
+	import type {
+		Product,
+		Category,
+		CartItem,
+		OrderWithItems,
+		CreateOrderPayload
+	} from '#lib/types.ts';
+	import ProductGrid from '#lib/components/ProductGrid.svelte';
+	import OrderPanel from '#lib/components/OrderPanel.svelte';
+	import CheckoutModal from '#lib/components/CheckoutModal.svelte';
+	import { t } from '#lib/i18n/index.ts';
 
 	let products = $state<Product[]>([]);
 	let categories = $state<Category[]>([]);

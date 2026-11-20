@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { api_call } from '$lib/api';
-	import { downloadCsv } from '$lib/export-csv';
-	import type { OrderWithItems } from '$lib/types';
-	import { formatPrice } from '$lib/utils/format';
-	import { t } from '$lib/i18n';
+	import { api_call } from '#lib/api.ts';
+	import { downloadCsv } from '#lib/export-csv.ts';
+	import type { OrderWithItems } from '#lib/types.ts';
+	import { formatPrice } from '#lib/utils/format.ts';
+	import { t } from '#lib/i18n/index.ts';
 
 	let orders = $state<OrderWithItems[]>([]);
 	let isLoading = $state(true);

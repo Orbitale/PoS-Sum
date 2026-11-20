@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { confirmState, _respond } from '$lib/confirm.svelte';
-	import { t } from '$lib/i18n';
+	import { confirmState, _respond } from '#lib/confirm.svelte.ts';
+	import { t } from '#lib/i18n/index.ts';
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {

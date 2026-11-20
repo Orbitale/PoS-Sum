@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Product, Category } from '$lib/types';
-	import { t } from '$lib/i18n';
+	import type { Product, Category } from '#lib/types.ts';
+	import { t } from '#lib/i18n/index.ts';
 
 	interface Props {
 		product: Product | null;

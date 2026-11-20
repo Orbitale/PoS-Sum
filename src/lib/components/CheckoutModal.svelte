@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { CartItem } from '$lib/types';
-	import { formatPrice } from '$lib/utils/format';
-	import { t } from '$lib/i18n';
+	import type { CartItem } from '#lib/types.ts';
+	import { formatPrice } from '#lib/utils/format.ts';
+	import { t } from '#lib/i18n/index.ts';
 	import Numpad from './Numpad.svelte';
 
 	interface Props {
