@@ -69,7 +69,8 @@
 			q($t('orders.csvColId')),
 			q($t('orders.csvColDate')),
 			q($t('orders.csvColTotal')),
-			q($t('orders.csvColPaymentMethod'))
+			q($t('orders.csvColPaymentMethod')),
+			q($t('orders.csvColWeight')),
 		];
 		for (const name of productNames) {
 			header.push(q(`${name} (${$t('orders.colUnitPrice')})`));
@@ -90,7 +91,8 @@
 				q(order.id),
 				q(order.created_at),
 				q(centsToEuros(order.total)),
-				q(order.payment_method)
+				q(order.payment_method),
+				q(order.weight != null ? String(order.weight) : ''),
 			];
 			for (const name of productNames) {
 				const item = itemsByProduct.get(name);
@@ -138,6 +140,9 @@
 						<span class="badge rounded-pill {order.payment_method === 'cash' ? 'bg-success-subtle text-success-emphasis' : 'bg-primary-subtle text-primary-emphasis'}">
 							{$t('orders.paymentMethod.' + order.payment_method)}
 						</span>
+						{#if order.weight != null}
+							<span class="small text-muted">{$t('orders.weight')}: {order.weight}&nbsp;Kg</span>
+						{/if}
 						<span class="ms-auto fs-5 fw-bold">{formatPrice(order.total)}</span>
 					</div>
 					<table class="table table-sm mb-0">

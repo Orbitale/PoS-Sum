@@ -5,13 +5,15 @@
 
 	interface Props {
 		items: CartItem[];
+		weight: string;
+		onWeightChange: (value: string) => void;
 		onIncrease: (productId: string) => void;
 		onDecrease: (productId: string) => void;
 		onCheckout: () => void;
 		onClear: () => void;
 	}
 
-	let { items, onIncrease, onDecrease, onCheckout, onClear }: Props = $props();
+	let { items, weight, onWeightChange, onIncrease, onDecrease, onCheckout, onClear }: Props = $props();
 
 	let total = $derived(items.reduce((sum, i) => sum + i.product.price * i.quantity, 0));
 	let isEmpty = $derived(items.length === 0);
@@ -54,6 +56,19 @@
 	{/if}
 
 	<div class="border-top border-2 p-3 mt-auto">
+		<label class="d-flex flex-column gap-1 fw-semibold mb-2" style="font-size: 0.95rem;">
+			{$t('order.weight')}
+			<input
+				class="form-control"
+				type="number"
+				inputmode="decimal"
+				min="0"
+				placeholder={$t('order.weightPlaceholder')}
+				value={weight}
+				disabled={isEmpty}
+				oninput={(e) => onWeightChange(e.currentTarget.value)}
+			/>
+		</label>
 		<div class="d-flex justify-content-between fs-5 fw-bold mb-2">
 			<span>{$t('order.total')}</span>
 			<span>{formatPrice(total)}</span>
@@ -77,6 +92,9 @@
 			height: 100%;
 			width: 50%;
 		}
+	}
+	input[disabled]:hover {
+	  cursor: not-allowed;
 	}
 
 </style>

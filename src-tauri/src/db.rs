@@ -12,9 +12,10 @@ pub struct DbState {
 }
 
 pub fn migrations() -> Vec<rusqlite_migration::M<'static>> {
-    vec![rusqlite_migration::M::up(include_str!(
-        "./migrations/0-init.sql"
-    ))]
+    vec![
+        rusqlite_migration::M::up(include_str!("./migrations/0-init.sql")),
+        rusqlite_migration::M::up(include_str!("./migrations/1-nonprofits-enhancements.sql")),
+    ]
 }
 
 #[cfg(test)]

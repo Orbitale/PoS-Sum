@@ -190,6 +190,12 @@ pub(crate) fn create_order_inner(
         return Err("Cannot create an order with no items".to_string());
     }
 
+    if let Some(weight) = payload.weight {
+        if !weight.is_finite() || weight < 0.0 {
+            return Err("Weight must be a non-negative finite number".to_string());
+        }
+    }
+
     // Compute totals.
     let mut order_items: Vec<OrderItem> = Vec::with_capacity(payload.items.len());
     let order_id = Uuid::new_v4().to_string();
@@ -223,12 +229,13 @@ pub(crate) fn create_order_inner(
         .map_err(|e| format!("Transaction begin error: {e}"))?;
 
     tx.execute(
-        "INSERT INTO orders (id, created_at, total, payment_method) VALUES (?1, ?2, ?3, ?4)",
+        "INSERT INTO orders (id, created_at, total, payment_method, weight) VALUES (?1, ?2, ?3, ?4, ?5)",
         params![
             order_id,
             created_at,
             order_total,
-            payload.payment_method.as_db_str()
+            payload.payment_method.as_db_str(),
+            payload.weight,
         ],
     )
     .map_err(|e| format!("Insert order error: {e}"))?;
@@ -259,6 +266,7 @@ pub(crate) fn create_order_inner(
             created_at,
             total: order_total,
             payment_method: payload.payment_method,
+            weight: payload.weight,
         },
         items: order_items,
     })
@@ -270,7 +278,7 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
     // Fetch all orders.
     let mut order_stmt = conn
         .prepare(
-            "SELECT id, created_at, total, payment_method FROM orders ORDER BY created_at DESC",
+            "SELECT id, created_at, total, payment_method, weight FROM orders ORDER BY created_at DESC",
         )
         .map_err(|e| format!("Query error: {e}"))?;
 
@@ -289,6 +297,7 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
                 created_at: row.get(1)?,
                 total: row.get(2)?,
                 payment_method,
+                weight: row.get(4)?,
             })
         })
         .map_err(|e| format!("Query error: {e}"))?
@@ -750,12 +759,14 @@ mod tests {
                     quantity: 3,
                 }],
                 payment_method: PaymentMethod::Cash,
+                weight: None,
             },
         )
         .unwrap();
 
         assert_eq!(order.order.total, 150);
         assert_eq!(order.order.payment_method, PaymentMethod::Cash);
+        assert_eq!(order.order.weight, None);
         assert_eq!(order.items.len(), 1);
         assert_eq!(order.items[0].product_id, p.id);
         assert_eq!(order.items[0].quantity, 3);
@@ -765,7 +776,56 @@ mod tests {
         let orders = list_orders_inner(&db).unwrap();
         assert_eq!(orders.len(), 1);
         assert_eq!(orders[0].order.total, 150);
+        assert_eq!(orders[0].order.weight, None);
         assert_eq!(orders[0].items.len(), 1);
+    }
+
+    #[test]
+    fn create_order_with_weight() {
+        let db = init_db_in_memory();
+        let p = make_product(&db, "Candy", 50, "sucreries");
+
+        let order = create_order_inner(
+            &db,
+            CreateOrderPayload {
+                items: vec![CreateOrderItemPayload {
+                    product_id: p.id.clone(),
+                    product_name: "Candy".to_string(),
+                    unit_price: 50,
+                    quantity: 1,
+                }],
+                payment_method: PaymentMethod::Card,
+                weight: Some(1.25),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(order.order.weight, Some(1.25));
+
+        let orders = list_orders_inner(&db).unwrap();
+        assert_eq!(orders[0].order.weight, Some(1.25));
+    }
+
+    #[test]
+    fn create_order_negative_weight_fails() {
+        let db = init_db_in_memory();
+        let p = make_product(&db, "Candy", 50, "sucreries");
+
+        let result = create_order_inner(
+            &db,
+            CreateOrderPayload {
+                items: vec![CreateOrderItemPayload {
+                    product_id: p.id.clone(),
+                    product_name: "Candy".to_string(),
+                    unit_price: 50,
+                    quantity: 1,
+                }],
+                payment_method: PaymentMethod::Cash,
+                weight: Some(-0.5),
+            },
+        );
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Weight"));
     }
 
     #[test]
@@ -776,6 +836,7 @@ mod tests {
             CreateOrderPayload {
                 items: vec![],
                 payment_method: PaymentMethod::Card,
+                weight: None,
             },
         );
         assert!(result.is_err());
@@ -799,6 +860,7 @@ mod tests {
                     quantity: 2,
                 }],
                 payment_method: PaymentMethod::Cash,
+                weight: None,
             },
         )
         .unwrap();
@@ -822,6 +884,7 @@ mod tests {
                     },
                 ],
                 payment_method: PaymentMethod::Card,
+                weight: Some(2.5),
             },
         )
         .unwrap();
@@ -895,6 +958,7 @@ mod tests {
                     quantity: 1,
                 }],
                 payment_method: PaymentMethod::Cash,
+                weight: None,
             },
         )
         .unwrap();

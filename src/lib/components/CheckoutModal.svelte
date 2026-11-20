@@ -100,7 +100,7 @@
 					</div>
 					<label class="d-flex flex-column gap-1 fw-semibold" style="font-size:0.95rem">
 						{$t('checkout.amountReceived')}
-						<input class="form-control text-end fs-5" type="text" inputmode="none" readonly placeholder={formattedTotal} value={cashReceived} />
+						<input class="form-control text-end fs-5" type="text" placeholder={formattedTotal} value={cashReceived} />
 					</label>
 					<div class="mt-2 fs-5 text-success">
 						{$t('checkout.change')} <strong>{formatPrice(change)}</strong>

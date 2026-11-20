@@ -123,6 +123,8 @@ pub struct Order {
     pub total: i64,
     /// Payment method used for this order.
     pub payment_method: PaymentMethod,
+    /// Optional weight in kilograms.
+    pub weight: Option<f64>,
 }
 
 /// A line item within an order.
@@ -156,6 +158,9 @@ pub struct CreateOrderPayload {
     pub items: Vec<CreateOrderItemPayload>,
     /// Payment method for this order.
     pub payment_method: PaymentMethod,
+    /// Optional weight in kilograms.
+    #[serde(default)]
+    pub weight: Option<f64>,
 }
 
 /// A single item within a new-order payload.

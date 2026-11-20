@@ -16,6 +16,7 @@
 	let products = $state<Product[]>([]);
 	let categories = $state<Category[]>([]);
 	let cart = $state<CartItem[]>([]);
+	let weight = $state('');
 	let isCheckoutOpen = $state(false);
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
@@ -54,10 +55,23 @@
 		cart = cart
 			.map((i) => (i.product.id === productId ? { ...i, quantity: i.quantity - 1 } : i))
 			.filter((i) => i.quantity > 0);
+		if (cart.length === 0) {
+			weight = '';
+		}
 	}
 
 	function clearCart() {
 		cart = [];
+		weight = '';
+	}
+
+	function parseWeight(value: string): number | null {
+		const trimmed = value.trim();
+		if (trimmed === '') {
+			return null;
+		}
+		const parsed = parseFloat(trimmed.replace(',', '.'));
+		return Number.isNaN(parsed) ? null : parsed;
 	}
 
 	async function submitOrder(paymentMethod: 'cash' | 'card') {
@@ -68,12 +82,14 @@
 				unit_price: i.product.price,
 				quantity: i.quantity
 			})),
-			payment_method: paymentMethod
+			payment_method: paymentMethod,
+			weight: parseWeight(weight),
 		};
 
 		try {
 			await api_call<OrderWithItems>('create_order', { payload });
 			cart = [];
+			weight = '';
 			isCheckoutOpen = false;
 		} catch (e) {
 			error = $t('sales.orderError', { error: String(e) });
@@ -93,6 +109,8 @@
 		</main>
 		<OrderPanel
 			items={cart}
+			{weight}
+			onWeightChange={(value) => (weight = value)}
 			onIncrease={increaseQuantity}
 			onDecrease={decreaseQuantity}
 			onCheckout={() => (isCheckoutOpen = true)}
