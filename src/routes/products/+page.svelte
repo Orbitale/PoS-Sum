@@ -60,6 +60,7 @@
 		price: number;
 		category_id: string;
 		available: boolean;
+		fixed_price: boolean;
 	}) {
 		try {
 			if (editingProduct) {
@@ -68,14 +69,16 @@
 					name: data.name,
 					price: data.price,
 					category_id: data.category_id,
-					available: data.available
+					available: data.available,
+					fixed_price: data.fixed_price
 				};
 				await api_call<Product>('update_product', { payload });
 			} else {
 				const payload: CreateProductPayload = {
 					name: data.name,
 					price: data.price,
-					category_id: data.category_id
+					category_id: data.category_id,
+					fixed_price: data.fixed_price
 				};
 				await api_call<Product>('create_product', { payload });
 			}
@@ -114,15 +117,32 @@
 <div class="mx-auto px-4 pb-4">
 	<div class="d-flex align-items-center justify-content-between pt-4 pb-3">
 		<h1 class="h4 m-0 fw-semibold">{$t('products.title')}</h1>
-		<button class="btn btn-primary fw-semibold" onclick={openCreate}>{$t('products.addButton')}</button>
+		<button class="btn btn-primary fw-semibold" onclick={openCreate}>
+			{$t('products.addButton')}
+		</button>
 	</div>
 
 	{#if isLoading}
-		<div class="d-flex align-items-center justify-content-center text-muted fs-5" style="height: 200px">{$t('products.loading')}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-muted fs-5"
+			style="height: 200px"
+		>
+			{$t('products.loading')}
+		</div>
 	{:else if error}
-		<div class="d-flex align-items-center justify-content-center text-danger fs-5" style="height: 200px">{error}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-danger fs-5"
+			style="height: 200px"
+		>
+			{error}
+		</div>
 	{:else if products.length === 0}
-		<div class="d-flex align-items-center justify-content-center text-muted fs-5" style="height: 200px">{$t('products.empty')}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-muted fs-5"
+			style="height: 200px"
+		>
+			{$t('products.empty')}
+		</div>
 	{:else}
 		<div class="table-responsive">
 			<table class="table">
@@ -130,6 +150,7 @@
 					<tr>
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colName')}</th>
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colPrice')}</th>
+						<th scope="col" class="small text-muted fw-semibold">{$t('products.colFixedPrice')}</th>
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colCategory')}</th>
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colAvailable')}</th>
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colActions')}</th>
@@ -140,6 +161,9 @@
 						<tr class:opacity-50={!product.available}>
 							<td>{product.name}</td>
 							<td class="price">{formatPrice(product.price)}</td>
+							<td>
+								{product.fixed_price ? $t('products.fixedPrice') : $t('products.openPrice')}
+							</td>
 							<td>
 								<span
 									class="badge"
@@ -158,10 +182,16 @@
 								</button>
 							</td>
 							<td class="d-flex gap-1">
-								<button class="btn btn-outline-secondary btn-sm fw-semibold" onclick={() => openEdit(product)}>
+								<button
+									class="btn btn-outline-secondary btn-sm fw-semibold"
+									onclick={() => openEdit(product)}
+								>
 									{$t('products.edit')}
 								</button>
-								<button class="btn btn-outline-danger btn-sm fw-semibold" onclick={() => deleteProduct(product)}>
+								<button
+									class="btn btn-outline-danger btn-sm fw-semibold"
+									onclick={() => deleteProduct(product)}
+								>
 									{$t('products.delete')}
 								</button>
 							</td>

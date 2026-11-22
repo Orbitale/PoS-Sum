@@ -2,15 +2,17 @@
 	import type { Product, Category } from '#lib/types.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
 	import { groupedCategories } from '#lib/stores/category-visibility.ts';
+	import { customProductEnabled } from '#lib/stores/app-config.ts';
 	import { t } from '#lib/i18n/index.ts';
 
 	interface Props {
 		products: Product[];
 		categories: Category[];
 		onProductClick: (product: Product) => void;
+		onCreateCustomProduct?: () => void;
 	}
 
-	let { products, categories, onProductClick }: Props = $props();
+	let { products, categories, onProductClick, onCreateCustomProduct }: Props = $props();
 
 	let expandedCategoryId = $state<string | null>(null);
 
@@ -34,8 +36,7 @@
 	let categoryColors = $derived(Object.fromEntries(categories.map((c) => [c.id, c.color])));
 
 	type DisplayItem =
-		| { type: 'product'; product: Product }
-		| { type: 'category'; category: Category };
+		{ type: 'product'; product: Product } | { type: 'category'; category: Category };
 
 	let displayItems = $derived.by((): DisplayItem[] => {
 		if (expandedCategoryId) {
@@ -75,6 +76,15 @@
 		</button>
 	{/if}
 
+	{#if $customProductEnabled && onCreateCustomProduct}
+		<button
+			class="gridBtn btn fw-semibold rounded-3 custom-product"
+			onclick={onCreateCustomProduct}
+		>
+			<span>{$t('sales.createCustomProduct')}</span>
+		</button>
+	{/if}
+
 	{#each displayItems as item (item.type === 'product' ? item.product.id : item.category.id)}
 		{#if item.type === 'category'}
 			<button
@@ -88,31 +98,45 @@
 			<button
 				class="gridBtn btn fw-semibold rounded-3"
 				class:opacity-50={!item.product.available}
-				style="background: {!item.product.available ? '#999' : (categoryColors[item.product.category_id] ?? '#888')};"
+				style="background: {!item.product.available
+					? '#999'
+					: (categoryColors[item.product.category_id] ?? '#888')};"
 				onclick={() => onProductClick(item.product)}
 				disabled={!item.product.available}
 			>
-				<span class:text-decoration-line-through={!item.product.available}>{item.product.name}</span>
-				<span class="small fw-normal" class:text-decoration-line-through={!item.product.available}>{formatPrice(item.product.price)}</span>
+				<span class:text-decoration-line-through={!item.product.available}>
+					{item.product.name}
+				</span>
+				<span class="small fw-normal" class:text-decoration-line-through={!item.product.available}>
+					{#if !item.product.fixed_price}
+						🕊️ <i>{formatPrice(item.product.price)}</i>
+					{:else}
+						{formatPrice(item.product.price)}
+					{/if}
+				</span>
 			</button>
 		{/if}
 	{/each}
 </div>
 
 <style>
-		/* btn d-flex flex-column align-items-center justify-content-center */
+	/* btn d-flex flex-column align-items-center justify-content-center */
 	.gridBtn {
-			min-height: 80px;
-			color: white;
-			overflow: hidden;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
+		min-height: 80px;
+		color: white;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
 	}
 	.gridBtn.category {
-			border-width: 8px;
-			border-color: rgba(255,255,255,0.7);
-			border-style: dashed;
+		border-width: 8px;
+		border-color: rgba(255, 255, 255, 0.7);
+		border-style: dashed;
+	}
+	.gridBtn.custom-product {
+		background: #495057;
+		border: 2px dashed rgba(255, 255, 255, 0.55);
 	}
 </style>

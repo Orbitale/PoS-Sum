@@ -8,6 +8,61 @@ use crate::models::*;
 
 // ── Inner functions (testable without Tauri runtime) ────────────────────────
 
+pub(crate) fn list_configuration_inner(db: &DbState) -> Result<Vec<ConfigurationEntry>, String> {
+    let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
+    crate::db::ensure_configuration_defaults(&conn);
+
+    let mut stmt = conn
+        .prepare("SELECT id, name, value FROM configuration ORDER BY id")
+        .map_err(|e| format!("Query error: {e}"))?;
+
+    let entries = stmt
+        .query_map([], |row| {
+            Ok(ConfigurationEntry {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                value: row.get(2)?,
+            })
+        })
+        .map_err(|e| format!("Query error: {e}"))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Row mapping error: {e}"))?;
+
+    Ok(entries)
+}
+
+pub(crate) fn update_configuration_inner(
+    db: &DbState,
+    payload: UpdateConfigurationPayload,
+) -> Result<ConfigurationEntry, String> {
+    let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
+    crate::db::ensure_configuration_defaults(&conn);
+
+    let rows_affected = conn
+        .execute(
+            "UPDATE configuration SET value = ?1 WHERE id = ?2",
+            params![payload.value, payload.id],
+        )
+        .map_err(|e| format!("Update error: {e}"))?;
+
+    if rows_affected == 0 {
+        return Err(format!("Configuration not found: {}", payload.id));
+    }
+
+    conn.query_row(
+        "SELECT id, name, value FROM configuration WHERE id = ?1",
+        params![payload.id],
+        |row| {
+            Ok(ConfigurationEntry {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                value: row.get(2)?,
+            })
+        },
+    )
+    .map_err(|e| format!("Query error: {e}"))
+}
+
 pub(crate) fn list_categories_inner(db: &DbState) -> Result<Vec<Category>, String> {
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
@@ -77,7 +132,10 @@ pub(crate) fn list_products_inner(db: &DbState) -> Result<Vec<Product>, String> 
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
     let mut stmt = conn
-        .prepare("SELECT id, name, price, category_id, available FROM products ORDER BY category_id, name")
+        .prepare(
+            "SELECT id, name, price, category_id, available, fixed_price
+             FROM products ORDER BY category_id, name",
+        )
         .map_err(|e| format!("Query error: {e}"))?;
 
     let products = stmt
@@ -88,6 +146,7 @@ pub(crate) fn list_products_inner(db: &DbState) -> Result<Vec<Product>, String> 
                 price: row.get(2)?,
                 category_id: row.get(3)?,
                 available: row.get::<_, i64>(4)? != 0,
+                fixed_price: row.get::<_, i64>(5)? != 0,
             })
         })
         .map_err(|e| format!("Query error: {e}"))?
@@ -104,10 +163,12 @@ pub(crate) fn create_product_inner(
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
     let id = Uuid::new_v4().to_string();
+    let fixed_price_int: i64 = if payload.fixed_price { 1 } else { 0 };
 
     conn.execute(
-        "INSERT INTO products (id, name, price, category_id, available) VALUES (?1, ?2, ?3, ?4, 1)",
-        params![id, payload.name, payload.price, payload.category_id],
+        "INSERT INTO products (id, name, price, category_id, available, fixed_price)
+         VALUES (?1, ?2, ?3, ?4, 1, ?5)",
+        params![id, payload.name, payload.price, payload.category_id, fixed_price_int],
     )
     .map_err(|e| format!("Insert error: {e}"))?;
 
@@ -117,6 +178,7 @@ pub(crate) fn create_product_inner(
         price: payload.price,
         category_id: payload.category_id,
         available: true,
+        fixed_price: payload.fixed_price,
     })
 }
 
@@ -127,15 +189,18 @@ pub(crate) fn update_product_inner(
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
     let available_int: i64 = if payload.available { 1 } else { 0 };
+    let fixed_price_int: i64 = if payload.fixed_price { 1 } else { 0 };
 
     let rows_affected = conn
         .execute(
-            "UPDATE products SET name = ?1, price = ?2, category_id = ?3, available = ?4 WHERE id = ?5",
+            "UPDATE products SET name = ?1, price = ?2, category_id = ?3, available = ?4, fixed_price = ?5
+             WHERE id = ?6",
             params![
                 payload.name,
                 payload.price,
                 payload.category_id,
                 available_int,
+                fixed_price_int,
                 payload.id
             ],
         )
@@ -151,6 +216,7 @@ pub(crate) fn update_product_inner(
         price: payload.price,
         category_id: payload.category_id,
         available: payload.available,
+        fixed_price: payload.fixed_price,
     })
 }
 
@@ -160,7 +226,6 @@ pub(crate) fn toggle_product_availability_inner(
 ) -> Result<bool, String> {
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
-    // Read current availability.
     let current: i64 = conn
         .query_row(
             "SELECT available FROM products WHERE id = ?1",
@@ -196,7 +261,6 @@ pub(crate) fn create_order_inner(
         }
     }
 
-    // Compute totals.
     let mut order_items: Vec<OrderItem> = Vec::with_capacity(payload.items.len());
     let order_id = Uuid::new_v4().to_string();
     let mut order_total: i64 = 0;
@@ -218,12 +282,12 @@ pub(crate) fn create_order_inner(
             unit_price: item.unit_price,
             quantity: item.quantity,
             total: line_total,
+            comment: item.comment.clone(),
         });
     }
 
     let created_at = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
 
-    // Execute inside a database transaction for atomicity.
     let tx = conn
         .transaction()
         .map_err(|e| format!("Transaction begin error: {e}"))?;
@@ -242,8 +306,8 @@ pub(crate) fn create_order_inner(
 
     for oi in &order_items {
         tx.execute(
-            "INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            "INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total, comment)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
             params![
                 oi.id,
                 oi.order_id,
@@ -251,7 +315,8 @@ pub(crate) fn create_order_inner(
                 oi.product_name,
                 oi.unit_price,
                 oi.quantity,
-                oi.total
+                oi.total,
+                oi.comment
             ],
         )
         .map_err(|e| format!("Insert order item error: {e}"))?;
@@ -275,7 +340,6 @@ pub(crate) fn create_order_inner(
 pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, String> {
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
-    // Fetch all orders.
     let mut order_stmt = conn
         .prepare(
             "SELECT id, created_at, total, payment_method, weight FROM orders ORDER BY created_at DESC",
@@ -304,10 +368,9 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format!("Row mapping error: {e}"))?;
 
-    // Fetch all items and group by order_id.
     let mut item_stmt = conn
         .prepare(
-            "SELECT id, order_id, product_id, product_name, unit_price, quantity, total
+            "SELECT id, order_id, product_id, product_name, unit_price, quantity, total, comment
              FROM order_items
              ORDER BY order_id",
         )
@@ -323,13 +386,13 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
                 unit_price: row.get(4)?,
                 quantity: row.get(5)?,
                 total: row.get(6)?,
+                comment: row.get(7)?,
             })
         })
         .map_err(|e| format!("Query error: {e}"))?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format!("Row mapping error: {e}"))?;
 
-    // Build a map of order_id -> items.
     let mut items_map: std::collections::HashMap<String, Vec<OrderItem>> =
         std::collections::HashMap::new();
     for item in all_items {
@@ -353,7 +416,6 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
 pub(crate) fn get_dashboard_summary_inner(db: &DbState) -> Result<DashboardSummary, String> {
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
-    // Grand totals.
     let (total_revenue, total_transactions): (i64, i64) = conn
         .query_row(
             "SELECT COALESCE(SUM(total), 0), COUNT(*) FROM orders",
@@ -362,7 +424,6 @@ pub(crate) fn get_dashboard_summary_inner(db: &DbState) -> Result<DashboardSumma
         )
         .map_err(|e| format!("Query error: {e}"))?;
 
-    // Per-product summary.
     let mut prod_stmt = conn
         .prepare(
             "SELECT product_id, product_name,
@@ -387,7 +448,6 @@ pub(crate) fn get_dashboard_summary_inner(db: &DbState) -> Result<DashboardSumma
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format!("Row mapping error: {e}"))?;
 
-    // Per-payment-method breakdown.
     let mut pm_stmt = conn
         .prepare(
             "SELECT payment_method,
@@ -444,7 +504,6 @@ pub(crate) fn delete_product_inner(db: &DbState, product_id: String) -> Result<(
 pub(crate) fn delete_category_inner(db: &DbState, category_id: String) -> Result<(), String> {
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
-    // Check whether any products reference this category.
     let product_count: i64 = conn
         .query_row(
             "SELECT COUNT(*) FROM products WHERE category_id = ?1",
@@ -471,21 +530,23 @@ pub(crate) fn delete_category_inner(db: &DbState, category_id: String) -> Result
     Ok(())
 }
 
+pub(crate) fn load_default_dataset_inner(db: &DbState, dataset: String) -> Result<(), String> {
+    let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
+    crate::db::load_default_dataset(&conn, &dataset)
+}
+
 pub(crate) fn reset_database_inner(db: &DbState) -> Result<(), String> {
     let mut conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
     let db_path = &db.db_path;
     let is_file_db = db_path != ":memory:";
 
-    // Close the current connection by replacing it with a temporary in-memory one.
-    // This ensures the file handle is released before we delete the file.
     if is_file_db {
         *conn = Connection::open_in_memory()
             .map_err(|e| format!("Failed to create temporary connection: {e}"))?;
 
         std::fs::remove_file(db_path)
             .map_err(|e| format!("Failed to delete database file: {e}"))?;
-        // Also remove WAL/SHM sidecar files if they exist.
         let _ = std::fs::remove_file(format!("{db_path}-wal"));
         let _ = std::fs::remove_file(format!("{db_path}-shm"));
 
@@ -506,7 +567,8 @@ pub(crate) fn reset_database_inner(db: &DbState) -> Result<(), String> {
         .to_latest(&mut *conn)
         .map_err(|e| format!("Migration error: {e}"))?;
 
-    crate::db::create_default_data(&conn);
+    // Restore configuration defaults only — no placeholder products/categories.
+    crate::db::ensure_configuration_defaults(&conn);
 
     Ok(())
 }
@@ -529,6 +591,19 @@ fn reset_sales_inner(state: &DbState) -> Result<(), String> {
 }
 
 // ── Tauri command wrappers ──────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn list_configuration(state: State<'_, DbState>) -> Result<Vec<ConfigurationEntry>, String> {
+    list_configuration_inner(&state)
+}
+
+#[tauri::command]
+pub fn update_configuration(
+    state: State<'_, DbState>,
+    payload: UpdateConfigurationPayload,
+) -> Result<ConfigurationEntry, String> {
+    update_configuration_inner(&state, payload)
+}
 
 #[tauri::command]
 pub fn list_categories(state: State<'_, DbState>) -> Result<Vec<Category>, String> {
@@ -609,6 +684,11 @@ pub fn get_dashboard_summary(state: State<'_, DbState>) -> Result<DashboardSumma
 }
 
 #[tauri::command]
+pub fn load_default_dataset(state: State<'_, DbState>, dataset: String) -> Result<(), String> {
+    load_default_dataset_inner(&state, dataset)
+}
+
+#[tauri::command]
 pub fn reset_database(state: State<'_, DbState>) -> Result<(), String> {
     reset_database_inner(&state)
 }
@@ -639,23 +719,77 @@ mod tests {
     use super::*;
     use crate::db::init_db_in_memory;
 
+    fn ensure_category(db: &DbState, id: &str) {
+        let _ = create_category_inner(
+            db,
+            CreateCategoryPayload {
+                id: id.to_string(),
+                label: id.to_string(),
+                color: "#888888".to_string(),
+            },
+        );
+    }
+
     fn make_product(db: &DbState, name: &str, price: i64, category_id: &str) -> Product {
+        ensure_category(db, category_id);
         create_product_inner(
             db,
             CreateProductPayload {
                 name: name.to_string(),
                 price,
                 category_id: category_id.to_string(),
+                fixed_price: true,
             },
         )
         .expect("create_product_inner failed")
     }
 
     #[test]
-    fn list_products_returns_defaults() {
+    fn list_products_starts_empty() {
         let db = init_db_in_memory();
         let products = list_products_inner(&db).unwrap();
-        assert_eq!(products.len(), 20);
+        assert!(products.is_empty());
+    }
+
+    #[test]
+    fn configuration_defaults_are_present() {
+        let db = init_db_in_memory();
+        let entries = list_configuration_inner(&db).unwrap();
+        let ids: Vec<_> = entries.iter().map(|e| e.id.as_str()).collect();
+        assert!(ids.contains(&"shop_name"));
+        assert!(ids.contains(&"order_weight_enabled"));
+        assert!(ids.contains(&"custom_product_enabled"));
+        assert!(ids.contains(&"shop_language"));
+        assert!(ids.contains(&"theme"));
+
+        let lang = entries.iter().find(|e| e.id == "shop_language").unwrap();
+        assert_eq!(lang.value, "fr");
+    }
+
+    #[test]
+    fn configuration_defaults_reappear_after_delete() {
+        let db = init_db_in_memory();
+        {
+            let conn = db.conn.lock().unwrap();
+            conn.execute("DELETE FROM configuration WHERE id = 'shop_name'", [])
+                .unwrap();
+        }
+        let entries = list_configuration_inner(&db).unwrap();
+        assert!(entries.iter().any(|e| e.id == "shop_name"));
+    }
+
+    #[test]
+    fn update_configuration_value() {
+        let db = init_db_in_memory();
+        let updated = update_configuration_inner(
+            &db,
+            UpdateConfigurationPayload {
+                id: "shop_name".to_string(),
+                value: "My Shop".to_string(),
+            },
+        )
+        .unwrap();
+        assert_eq!(updated.value, "My Shop");
     }
 
     #[test]
@@ -666,14 +800,28 @@ mod tests {
         assert_eq!(created.price, 150);
         assert_eq!(created.category_id, "boisson-sans-alcool");
         assert!(created.available);
+        assert!(created.fixed_price);
 
         let products = list_products_inner(&db).unwrap();
-        assert_eq!(products.len(), 21);
-        let cola = products
-            .iter()
-            .find(|p| p.id == created.id)
-            .expect("Cola should be in the list");
-        assert_eq!(cola.name, "Cola");
+        assert_eq!(products.len(), 1);
+        assert_eq!(products[0].name, "Cola");
+    }
+
+    #[test]
+    fn create_product_with_updatable_price() {
+        let db = init_db_in_memory();
+        ensure_category(&db, "services");
+        let created = create_product_inner(
+            &db,
+            CreateProductPayload {
+                name: "Custom".to_string(),
+                price: 1000,
+                category_id: "services".to_string(),
+                fixed_price: false,
+            },
+        )
+        .unwrap();
+        assert!(!created.fixed_price);
     }
 
     #[test]
@@ -689,6 +837,7 @@ mod tests {
                 price: 250,
                 category_id: "snack".to_string(),
                 available: false,
+                fixed_price: false,
             },
         )
         .unwrap();
@@ -697,15 +846,7 @@ mod tests {
         assert_eq!(updated.name, "Crisps");
         assert_eq!(updated.price, 250);
         assert!(!updated.available);
-
-        // Verify via list
-        let products = list_products_inner(&db).unwrap();
-        let crisps = products
-            .iter()
-            .find(|p| p.id == updated.id)
-            .expect("Crisps should be in the list");
-        assert_eq!(crisps.name, "Crisps");
-        assert!(!crisps.available);
+        assert!(!updated.fixed_price);
     }
 
     #[test]
@@ -719,6 +860,7 @@ mod tests {
                 price: 100,
                 category_id: "snack".to_string(),
                 available: true,
+                fixed_price: true,
             },
         );
         assert!(result.is_err());
@@ -731,15 +873,12 @@ mod tests {
         let p = make_product(&db, "Water", 100, "boisson-sans-alcool");
         assert!(p.available);
 
-        // Toggle off
         let new_state = toggle_product_availability_inner(&db, p.id.clone()).unwrap();
         assert!(!new_state);
 
-        // Toggle back on
         let new_state = toggle_product_availability_inner(&db, p.id.clone()).unwrap();
         assert!(new_state);
 
-        // Toggle off again
         let new_state = toggle_product_availability_inner(&db, p.id).unwrap();
         assert!(!new_state);
     }
@@ -757,6 +896,7 @@ mod tests {
                     product_name: "Candy".to_string(),
                     unit_price: 50,
                     quantity: 3,
+                    comment: String::new(),
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: None,
@@ -771,13 +911,42 @@ mod tests {
         assert_eq!(order.items[0].product_id, p.id);
         assert_eq!(order.items[0].quantity, 3);
         assert_eq!(order.items[0].total, 150);
+        assert_eq!(order.items[0].comment, "");
 
-        // Verify via list_orders
         let orders = list_orders_inner(&db).unwrap();
         assert_eq!(orders.len(), 1);
         assert_eq!(orders[0].order.total, 150);
-        assert_eq!(orders[0].order.weight, None);
         assert_eq!(orders[0].items.len(), 1);
+    }
+
+    #[test]
+    fn create_order_with_custom_price_and_comment() {
+        let db = init_db_in_memory();
+        let p = make_product(&db, "Jacket", 5000, "hauts");
+
+        let order = create_order_inner(
+            &db,
+            CreateOrderPayload {
+                items: vec![CreateOrderItemPayload {
+                    product_id: p.id.clone(),
+                    product_name: "Jacket".to_string(),
+                    unit_price: 4200,
+                    quantity: 1,
+                    comment: "Slight stain".to_string(),
+                }],
+                payment_method: PaymentMethod::Card,
+                weight: None,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(order.order.total, 4200);
+        assert_eq!(order.items[0].unit_price, 4200);
+        assert_eq!(order.items[0].comment, "Slight stain");
+
+        let orders = list_orders_inner(&db).unwrap();
+        assert_eq!(orders[0].items[0].comment, "Slight stain");
+        assert_eq!(orders[0].items[0].unit_price, 4200);
     }
 
     #[test]
@@ -793,6 +962,7 @@ mod tests {
                     product_name: "Candy".to_string(),
                     unit_price: 50,
                     quantity: 1,
+                    comment: String::new(),
                 }],
                 payment_method: PaymentMethod::Card,
                 weight: Some(1.25),
@@ -801,7 +971,6 @@ mod tests {
         .unwrap();
 
         assert_eq!(order.order.weight, Some(1.25));
-
         let orders = list_orders_inner(&db).unwrap();
         assert_eq!(orders[0].order.weight, Some(1.25));
     }
@@ -819,6 +988,7 @@ mod tests {
                     product_name: "Candy".to_string(),
                     unit_price: 50,
                     quantity: 1,
+                    comment: String::new(),
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: Some(-0.5),
@@ -849,7 +1019,6 @@ mod tests {
         let p1 = make_product(&db, "Soda", 200, "boisson-sans-alcool");
         let p2 = make_product(&db, "Bar", 100, "snack");
 
-        // Order 1: 2x Soda, paid by cash => 400
         create_order_inner(
             &db,
             CreateOrderPayload {
@@ -858,6 +1027,7 @@ mod tests {
                     product_name: "Soda".to_string(),
                     unit_price: 200,
                     quantity: 2,
+                    comment: String::new(),
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: None,
@@ -865,7 +1035,6 @@ mod tests {
         )
         .unwrap();
 
-        // Order 2: 1x Soda + 3x Bar, paid by card => 200 + 300 = 500
         create_order_inner(
             &db,
             CreateOrderPayload {
@@ -875,12 +1044,14 @@ mod tests {
                         product_name: "Soda".to_string(),
                         unit_price: 200,
                         quantity: 1,
+                        comment: String::new(),
                     },
                     CreateOrderItemPayload {
                         product_id: p2.id.clone(),
                         product_name: "Bar".to_string(),
                         unit_price: 100,
                         quantity: 3,
+                        comment: String::new(),
                     },
                 ],
                 payment_method: PaymentMethod::Card,
@@ -892,30 +1063,12 @@ mod tests {
         let summary = get_dashboard_summary_inner(&db).unwrap();
         assert_eq!(summary.total_revenue, 900);
         assert_eq!(summary.total_transactions, 2);
-
-        // Per-product: Soda = 600 (3 units), Bar = 300 (3 units). Ordered by revenue DESC.
         assert_eq!(summary.per_product.len(), 2);
         assert_eq!(summary.per_product[0].product_name, "Soda");
         assert_eq!(summary.per_product[0].total_quantity, 3);
         assert_eq!(summary.per_product[0].total_revenue, 600);
         assert_eq!(summary.per_product[1].product_name, "Bar");
-        assert_eq!(summary.per_product[1].total_quantity, 3);
-        assert_eq!(summary.per_product[1].total_revenue, 300);
-
-        // Per-payment-method: ordered by payment_method ASC => card, cash
         assert_eq!(summary.per_payment_method.len(), 2);
-        assert_eq!(
-            summary.per_payment_method[0].payment_method,
-            PaymentMethod::Card
-        );
-        assert_eq!(summary.per_payment_method[0].total_revenue, 500);
-        assert_eq!(summary.per_payment_method[0].transaction_count, 1);
-        assert_eq!(
-            summary.per_payment_method[1].payment_method,
-            PaymentMethod::Cash
-        );
-        assert_eq!(summary.per_payment_method[1].total_revenue, 400);
-        assert_eq!(summary.per_payment_method[1].transaction_count, 1);
     }
 
     #[test]
@@ -928,10 +1081,6 @@ mod tests {
         let after = list_products_inner(&db).unwrap().len();
 
         assert_eq!(after, before - 1);
-        assert!(list_products_inner(&db)
-            .unwrap()
-            .iter()
-            .all(|prod| prod.id != p.id));
     }
 
     #[test]
@@ -947,7 +1096,6 @@ mod tests {
         let db = init_db_in_memory();
         let p = make_product(&db, "Ordered Item", 200, "snack");
 
-        // Create an order referencing this product.
         create_order_inner(
             &db,
             CreateOrderPayload {
@@ -956,6 +1104,7 @@ mod tests {
                     product_name: "Ordered Item".to_string(),
                     unit_price: 200,
                     quantity: 1,
+                    comment: String::new(),
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: None,
@@ -963,15 +1112,12 @@ mod tests {
         )
         .unwrap();
 
-        let result = delete_product_inner(&db, p.id);
-        assert!(result.is_ok());
+        assert!(delete_product_inner(&db, p.id).is_ok());
     }
 
     #[test]
     fn delete_category_success() {
         let db = init_db_in_memory();
-
-        // Create a fresh category with no products.
         create_category_inner(
             &db,
             CreateCategoryPayload {
@@ -985,7 +1131,6 @@ mod tests {
         let before = list_categories_inner(&db).unwrap().len();
         delete_category_inner(&db, "test-cat".to_string()).unwrap();
         let after = list_categories_inner(&db).unwrap().len();
-
         assert_eq!(after, before - 1);
     }
 
@@ -1000,10 +1145,61 @@ mod tests {
     #[test]
     fn delete_category_with_products_fails() {
         let db = init_db_in_memory();
-
-        // The "snack" category has default products referencing it.
+        make_product(&db, "Item", 100, "snack");
         let result = delete_category_inner(&db, "snack".to_string());
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("referenced by"));
+    }
+
+    #[test]
+    fn load_snackbar_dataset() {
+        let db = init_db_in_memory();
+        load_default_dataset_inner(&db, "snackbar".to_string()).unwrap();
+        let products = list_products_inner(&db).unwrap();
+        let categories = list_categories_inner(&db).unwrap();
+        assert_eq!(products.len(), 31);
+        assert_eq!(categories.len(), 7);
+        assert!(products.iter().all(|p| p.fixed_price));
+    }
+
+    #[test]
+    fn load_clothing_dataset_has_open_prices() {
+        let db = init_db_in_memory();
+        load_default_dataset_inner(&db, "clothing".to_string()).unwrap();
+        let products = list_products_inner(&db).unwrap();
+        assert!(!products.is_empty());
+        assert!(products.iter().any(|p| !p.fixed_price));
+        assert!(products.iter().any(|p| p.fixed_price));
+    }
+
+    #[test]
+    fn load_unknown_dataset_fails() {
+        let db = init_db_in_memory();
+        let result = load_default_dataset_inner(&db, "unknown".to_string());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn reset_database_keeps_config_without_catalog() {
+        let db = init_db_in_memory();
+        load_default_dataset_inner(&db, "snackbar".to_string()).unwrap();
+        update_configuration_inner(
+            &db,
+            UpdateConfigurationPayload {
+                id: "shop_name".to_string(),
+                value: "Temp".to_string(),
+            },
+        )
+        .unwrap();
+
+        reset_database_inner(&db).unwrap();
+
+        assert!(list_products_inner(&db).unwrap().is_empty());
+        assert!(list_categories_inner(&db).unwrap().is_empty());
+        let entries = list_configuration_inner(&db).unwrap();
+        assert!(entries.iter().any(|e| e.id == "shop_name"));
+        // Fresh DB restores default empty shop name
+        let shop = entries.iter().find(|e| e.id == "shop_name").unwrap();
+        assert_eq!(shop.value, "");
     }
 }

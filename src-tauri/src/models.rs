@@ -11,15 +11,33 @@ pub struct AppVersion {
     pub arch: String,
 }
 
+// ── Configuration ───────────────────────────────────────────────────────────
+
+/// A single application configuration entry.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ConfigurationEntry {
+    pub id: String,
+    pub name: String,
+    pub value: String,
+}
+
+/// Payload sent from the frontend when updating a configuration value.
+#[derive(Debug, Deserialize)]
+pub struct UpdateConfigurationPayload {
+    pub id: String,
+    pub value: String,
+}
+
 // ── PaymentMethod ───────────────────────────────────────────────────────────
 
 /// The accepted payment methods.
-/// Serializes to/from lowercase strings ("cash", "card") for the JS boundary.
+/// Serializes to/from lowercase strings ("cash", "card", "check") for the JS boundary.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum PaymentMethod {
     Cash,
     Card,
+    Check,
 }
 
 impl fmt::Display for PaymentMethod {
@@ -27,6 +45,7 @@ impl fmt::Display for PaymentMethod {
         match self {
             PaymentMethod::Cash => write!(f, "cash"),
             PaymentMethod::Card => write!(f, "card"),
+            PaymentMethod::Check => write!(f, "check"),
         }
     }
 }
@@ -38,6 +57,7 @@ impl PaymentMethod {
         match s {
             "cash" => Ok(PaymentMethod::Cash),
             "card" => Ok(PaymentMethod::Card),
+            "check" => Ok(PaymentMethod::Check),
             other => Err(format!("Unknown payment method: {other}")),
         }
     }
@@ -47,6 +67,7 @@ impl PaymentMethod {
         match self {
             PaymentMethod::Cash => "cash",
             PaymentMethod::Card => "card",
+            PaymentMethod::Check => "check",
         }
     }
 }
@@ -91,6 +112,9 @@ pub struct Product {
     pub category_id: String,
     /// Whether the product appears on the sales screen.
     pub available: bool,
+    /// When true, the catalog price is fixed. When false, the price is only a
+    /// recommendation and may be changed on the current order.
+    pub fixed_price: bool,
 }
 
 /// Payload sent from the frontend when creating a new product.
@@ -99,6 +123,8 @@ pub struct CreateProductPayload {
     pub name: String,
     pub price: i64,
     pub category_id: String,
+    #[serde(default = "default_true")]
+    pub fixed_price: bool,
 }
 
 /// Payload sent from the frontend when updating an existing product.
@@ -109,6 +135,11 @@ pub struct UpdateProductPayload {
     pub price: i64,
     pub category_id: String,
     pub available: bool,
+    pub fixed_price: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 // ── Order ────────────────────────────────────────────────────────────────────
@@ -142,6 +173,9 @@ pub struct OrderItem {
     pub quantity: i64,
     /// unit_price * quantity (cents).
     pub total: i64,
+    /// Optional free-text comment for this line item.
+    #[serde(default)]
+    pub comment: String,
 }
 
 /// An order together with its line items, returned to the frontend.
@@ -170,6 +204,8 @@ pub struct CreateOrderItemPayload {
     pub product_name: String,
     pub unit_price: i64,
     pub quantity: i64,
+    #[serde(default)]
+    pub comment: String,
 }
 
 // ── Dashboard ────────────────────────────────────────────────────────────────

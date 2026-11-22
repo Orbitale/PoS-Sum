@@ -109,19 +109,38 @@
 	</div>
 
 	{#if isLoading}
-		<div class="d-flex align-items-center justify-content-center text-muted fs-5" style="height: 200px">{$t('dashboard.loading')}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-muted fs-5"
+			style="height: 200px"
+		>
+			{$t('dashboard.loading')}
+		</div>
 	{:else if error}
-		<div class="d-flex align-items-center justify-content-center text-danger fs-5" style="height: 200px">{error}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-danger fs-5"
+			style="height: 200px"
+		>
+			{error}
+		</div>
 	{:else if summary && summary.total_transactions === 0}
-		<div class="d-flex align-items-center justify-content-center text-muted fs-5" style="height: 200px">{$t('dashboard.noSales')}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-muted fs-5"
+			style="height: 200px"
+		>
+			{$t('dashboard.noSales')}
+		</div>
 	{:else if summary}
 		<div class="d-flex gap-3 mb-4">
 			<div class="flex-fill d-flex flex-column gap-1 p-3 border rounded-3 bg-body-secondary">
-				<span class="small fw-semibold text-uppercase text-muted">{$t('dashboard.totalRevenue')}</span>
+				<span class="small fw-semibold text-uppercase text-muted">
+					{$t('dashboard.totalRevenue')}
+				</span>
 				<span class="fs-3 fw-bold">{formatPrice(summary.total_revenue)}</span>
 			</div>
 			<div class="flex-fill d-flex flex-column gap-1 p-3 border rounded-3 bg-body-secondary">
-				<span class="small fw-semibold text-uppercase text-muted">{$t('dashboard.totalTransactions')}</span>
+				<span class="small fw-semibold text-uppercase text-muted">
+					{$t('dashboard.totalTransactions')}
+				</span>
 				<span class="fs-3 fw-bold">{summary.total_transactions}</span>
 			</div>
 		</div>
@@ -132,19 +151,27 @@
 				<table class="table">
 					<thead>
 						<tr>
-							<th class="text-uppercase small text-muted fw-semibold">{$t('dashboard.colProduct')}</th>
-							<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">{$t('dashboard.colUnitPrice')}</th>
-							<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">{$t('dashboard.colQuantity')}</th>
-							<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">{$t('dashboard.colTotal')}</th>
+							<th class="text-uppercase small text-muted fw-semibold">
+								{$t('dashboard.colProduct')}
+							</th>
+							<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">
+								{$t('dashboard.colUnitPrice')}
+							</th>
+							<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">
+								{$t('dashboard.colQuantity')}
+							</th>
+							<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">
+								{$t('dashboard.colTotal')}
+							</th>
 						</tr>
 					</thead>
 					<tbody>
 						{#each summary.per_product as row (row.product_id)}
 							<tr>
 								<td>{row.product_name}</td>
-								<td class="text-end text-nowrap"
-									>{formatPrice(Math.round(row.total_revenue / row.total_quantity))}</td
-								>
+								<td class="text-end text-nowrap">
+									{formatPrice(Math.round(row.total_revenue / row.total_quantity))}
+								</td>
 								<td class="text-end text-nowrap">{row.total_quantity}</td>
 								<td class="text-end text-nowrap">{formatPrice(row.total_revenue)}</td>
 							</tr>
@@ -152,8 +179,12 @@
 					</tbody>
 					<tfoot>
 						<tr>
-							<td class="fw-bold border-top border-2 border-bottom-0" colspan="3">{$t('dashboard.productTableTotal')}</td>
-							<td class="fw-bold border-top border-2 border-bottom-0 text-end text-nowrap">{formatPrice(summary.total_revenue)}</td>
+							<td class="fw-bold border-top border-2 border-bottom-0" colspan="3">
+								{$t('dashboard.productTableTotal')}
+							</td>
+							<td class="fw-bold border-top border-2 border-bottom-0 text-end text-nowrap">
+								{formatPrice(summary.total_revenue)}
+							</td>
 						</tr>
 					</tfoot>
 				</table>
@@ -166,9 +197,15 @@
 				<table class="table">
 					<thead>
 						<tr>
-							<th class="text-uppercase small text-muted fw-semibold">{$t('dashboard.colPaymentMethod')}</th>
-							<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">{$t('dashboard.colRevenue')}</th>
-							<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">{$t('dashboard.colTransactions')}</th>
+							<th class="text-uppercase small text-muted fw-semibold">
+								{$t('dashboard.colPaymentMethod')}
+							</th>
+							<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">
+								{$t('dashboard.colRevenue')}
+							</th>
+							<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">
+								{$t('dashboard.colTransactions')}
+							</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -184,5 +221,4 @@
 			</div>
 		</section>
 	{/if}
-
 </div>

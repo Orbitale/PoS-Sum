@@ -15,7 +15,54 @@ pub fn migrations() -> Vec<rusqlite_migration::M<'static>> {
     vec![
         rusqlite_migration::M::up(include_str!("./migrations/0-init.sql")),
         rusqlite_migration::M::up(include_str!("./migrations/1-nonprofits-enhancements.sql")),
+        rusqlite_migration::M::up(include_str!("./migrations/2-add-check-payment.sql")),
     ]
+}
+
+/// Default configuration rows. Re-inserted with INSERT OR IGNORE on every startup
+/// so missing options (including deliberately deleted ones) are restored.
+const CONFIG_DEFAULTS: &[(&str, &str, &str)] = &[
+    ("shop_name", "Shop name", ""),
+    ("order_weight_enabled", "Activate weight field in Order page", "0"),
+    (
+        "custom_product_enabled",
+        "Allow adding custom product on-the-fly",
+        "0",
+    ),
+    ("shop_language", "Shop language", "fr"),
+    ("theme", "Dark/Light mode", "light"),
+];
+
+pub fn ensure_configuration_defaults(conn: &Connection) {
+    for (id, name, value) in CONFIG_DEFAULTS {
+        conn.execute(
+            "INSERT OR IGNORE INTO configuration (id, name, value) VALUES (?1, ?2, ?3)",
+            rusqlite::params![id, name, value],
+        )
+        .expect("Failed to insert default configuration");
+    }
+}
+
+/// Supported placeholder catalogs that can replace products/categories.
+pub fn load_default_dataset(conn: &Connection, dataset: &str) -> Result<(), String> {
+    let sql = match dataset {
+        "snackbar" => include_str!("./seed/snackbar.sql"),
+        "clothing" => include_str!("./seed/clothing.sql"),
+        other => return Err(format!("Unknown default dataset: {other}")),
+    };
+
+    conn.execute_batch(
+        "BEGIN;
+         DELETE FROM products;
+         DELETE FROM categories;
+         COMMIT;",
+    )
+    .map_err(|e| format!("Failed to clear catalog: {e}"))?;
+
+    conn.execute_batch(sql)
+        .map_err(|e| format!("Failed to load default dataset '{dataset}': {e}"))?;
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -27,7 +74,7 @@ pub fn init_db_in_memory() -> DbState {
     let migrations = rusqlite_migration::Migrations::new(migrations());
     migrations.to_latest(&mut conn).unwrap();
 
-    create_default_data(&conn);
+    ensure_configuration_defaults(&conn);
 
     DbState {
         conn: Mutex::new(conn),
@@ -40,6 +87,8 @@ pub fn init_db_in_memory() -> DbState {
 ///
 /// The database file is named `pos_sum.db` and lives in the directory returned by
 /// `app_handle.path().app_data_dir()`.
+///
+/// Default products/categories are intentionally NOT loaded on first create.
 pub fn init_db(app_handle: &AppHandle) -> Result<DbState, String> {
     let data_dir = app_handle
         .path()
@@ -66,77 +115,10 @@ pub fn init_db(app_handle: &AppHandle) -> Result<DbState, String> {
     let migrations = rusqlite_migration::Migrations::new(migrations());
     migrations.to_latest(&mut conn).unwrap();
 
-    create_default_data(&conn);
+    ensure_configuration_defaults(&conn);
 
     Ok(DbState {
         conn: Mutex::new(conn),
         db_path: db_path.to_string_lossy().into_owned(),
     })
-}
-
-/// Inserts the default categories if they do not already exist.
-pub fn create_default_data(conn: &Connection) {
-    let defaults = [
-        ("cake-sale", "Cakes salés", "#e8a735"),
-        ("sandwichs", "Sandwiches/Paninis", "#9a8441"),
-        ("boisson-sans-alcool", "Boisson sans alcool", "#3b82f6"),
-        ("alcool", "Alcool", "#8b5cf6"),
-        ("sucreries", "Sucreries", "#e84393"),
-        ("crepes", "Crêpes", "#edff00"),
-        ("consignes", "Consignes", "#6b7280"),
-    ];
-    for (id, label, color) in &defaults {
-        conn.execute(
-            "INSERT OR IGNORE INTO categories (id, label, color) VALUES (?1, ?2, ?3)",
-            rusqlite::params![id, label, color],
-        )
-        .expect("Failed to insert default category");
-    }
-
-    let default_products: [(&str, &str, i64, &str); 31] = [
-        ("the", "Thé", 100, "boisson-sans-alcool"),
-        ("cafe", "Café", 100, "boisson-sans-alcool"),
-        ("soda", "Soda", 200, "boisson-sans-alcool"),
-        ("jus-de-fruit", "Jus de fruit", 200, "boisson-sans-alcool"),
-        ("limonade", "Limonade", 200, "boisson-sans-alcool"),
-
-        ("biere-pichet", "Bière (pichet)", 1200, "alcool"),
-        ("biere-25cl", "Bière (25cl)", 300, "alcool"),
-        ("cidre-doux", "Cidre (DOUX)", 300, "alcool"),
-        ("cidre-brut", "Cidre (BRUT)", 300, "alcool"),
-
-        ("consigne-verre", "Consigne Verre", 100, "consignes"),
-        ("consigne-pichet", "Consigne Pichet", 500, "consignes"),
-        ("retour-consigne-verre", "RETOUR Consigne Verre", -100, "consignes"),
-        ("retour-consigne-pichet", "RETOUR Consigne Pichet", -500, "consignes"),
-
-        ("bonbon", "Bonbon/M&Ms/Twix", 100, "sucreries"),
-        ("cake-sucre", "Cake sucré", 100, "sucreries"),
-        ("cake-pomme-amandes", "Cake Pomme Amandes", 100, "sucreries"),
-        ("cake-pomme-canelle", "Cake Pomme Canelles", 100, "sucreries"),
-        ("cake-pomme-chocolat", "Cake Pomme Chocolat", 100, "sucreries"),
-
-        ("crepe-nature", "Crêpe Nature", 200, "crepes"),
-        ("crepe-sucre", "Crêpe Sucre", 250, "crepes"),
-        ("crepe-confiture", "Crêpe Confiture", 350, "crepes"),
-        ("crepe-caramel", "Crêpe Caramel", 350, "crepes"),
-        ("crepe-nutella", "Crêpe Nutella", 350, "crepes"),
-        ("crepe-speculoos", "Crêpe Spéculoos", 350, "crepes"),
-
-        ("cake-tomate-mozza", "Cake Tomate Mozza", 100, "cake-sale"),
-        ("cake-chorizo-poivrons", "Cake Chorizo Poivrons", 100, "cake-sale"),
-        ("cake-lardons-olives", "Cake Lardons Olives", 100, "cake-sale"),
-
-        ("sandwich-jambon-fromage", "Sandwich Jambon Fromage", 400, "sandwichs"),
-        ("sandwich-fromage-salade", "Sandwich Fromage Salade", 400, "sandwichs"),
-        ("panini-3-fromages", "Panini 3 fromages", 400, "sandwichs"),
-        ("panini-jambon-fromage", "Panini Jambon Fromage", 400, "sandwichs"),
-    ];
-    for (id, name, price, category_id) in &default_products {
-        conn.execute(
-            "INSERT OR IGNORE INTO products (id, name, price, category_id) VALUES (?1, ?2, ?3, ?4)",
-            rusqlite::params![id, name, price, category_id],
-        )
-        .expect("Failed to insert default product");
-    }
 }

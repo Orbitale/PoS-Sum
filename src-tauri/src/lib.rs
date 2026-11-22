@@ -24,6 +24,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            list_configuration,
+            update_configuration,
             list_categories,
             create_category,
             update_category,
@@ -36,6 +38,7 @@ pub fn run() {
             create_order,
             list_orders,
             get_dashboard_summary,
+            load_default_dataset,
             reset_database,
             reset_sales,
             get_db_path,

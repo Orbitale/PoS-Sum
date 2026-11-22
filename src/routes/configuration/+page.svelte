@@ -10,23 +10,73 @@
 		groupAllCategories,
 		ungroupAllCategories
 	} from '#lib/stores/category-visibility.ts';
+	import {
+		shopName,
+		orderWeightEnabled,
+		customProductEnabled,
+		theme,
+		setConfigValue
+	} from '#lib/stores/app-config.ts';
 
 	let dbPath = $state<string | null>(null);
 	let appVersion = $state<AppVersion | null>(null);
 	let isResetting = $state(false);
 	let isResettingSales = $state(false);
+	let isLoadingDefaults = $state(false);
 	let categories = $state<Category[]>([]);
+	let shopNameInput = $state('');
+	let selectedDataset = $state<'snackbar' | 'clothing'>('snackbar');
 
-	let allGrouped = $derived(categories.length > 0 && categories.every(c => $groupedCategories.has(c.id)));
-	let someGrouped = $derived(categories.some(c => $groupedCategories.has(c.id)));
+	let allGrouped = $derived(
+		categories.length > 0 && categories.every((c) => $groupedCategories.has(c.id))
+	);
+	let someGrouped = $derived(categories.some((c) => $groupedCategories.has(c.id)));
 
 	onMount(async () => {
+		shopNameInput = $shopName;
 		[dbPath, appVersion, categories] = await Promise.all([
 			api_call<string>('get_db_path'),
 			api_call<AppVersion>('get_app_version'),
 			api_call<Category[]>('list_categories')
 		]);
 	});
+
+	async function saveShopName() {
+		await setConfigValue('shop_name', shopNameInput.trim());
+	}
+
+	async function toggleWeightEnabled() {
+		await setConfigValue('order_weight_enabled', $orderWeightEnabled ? '0' : '1');
+	}
+
+	async function toggleCustomProductEnabled() {
+		await setConfigValue('custom_product_enabled', $customProductEnabled ? '0' : '1');
+	}
+
+	async function changeLanguage(value: string) {
+		locale.set(value);
+		await setConfigValue('shop_language', value);
+	}
+
+	async function changeTheme(value: 'light' | 'dark') {
+		document.body.setAttribute('data-bs-theme', value);
+		await setConfigValue('theme', value);
+	}
+
+	async function loadDefaults() {
+		const confirmed = await confirm($t('configuration.replaceDefaultsConfirm'));
+		if (!confirmed) {
+			return;
+		}
+		isLoadingDefaults = true;
+		try {
+			await api_call('load_default_dataset', { dataset: selectedDataset });
+			window.location.reload();
+		} catch (e) {
+			alert($t('configuration.replaceDefaultsFailed', { error: String(e) }));
+			isLoadingDefaults = false;
+		}
+	}
 
 	async function resetSales() {
 		const confirmed = await confirm($t('dashboard.resetSalesConfirm'));
@@ -65,17 +115,67 @@
 	</div>
 
 	<section class="mb-4 pb-3 border-bottom">
+		<h2 class="h6 fw-semibold mb-2">{$t('configuration.shopName')}</h2>
+		<div class="d-flex gap-2 flex-wrap" style="max-width: 420px;">
+			<input
+				class="form-control"
+				type="text"
+				bind:value={shopNameInput}
+				placeholder={$t('configuration.shopNamePlaceholder')}
+			/>
+			<button class="btn btn-outline-primary btn-sm fw-semibold" onclick={saveShopName}>
+				{$t('configuration.save')}
+			</button>
+		</div>
+	</section>
+
+	<section class="mb-4 pb-3 border-bottom">
 		<h2 class="h6 fw-semibold mb-2">{$t('configuration.language')}</h2>
 		<select
 			class="form-select"
 			style="max-width: 200px;"
 			value={$locale}
-			onchange={(e) => locale.set((e.target as HTMLSelectElement).value)}
+			onchange={(e) => changeLanguage((e.target as HTMLSelectElement).value)}
 		>
 			{#each availableLocales as loc (loc)}
 				<option value={loc}>{$t('languages.' + loc)}</option>
 			{/each}
 		</select>
+	</section>
+
+	<section class="mb-4 pb-3 border-bottom">
+		<h2 class="h6 fw-semibold mb-2">{$t('configuration.theme')}</h2>
+		<select
+			class="form-select"
+			style="max-width: 200px;"
+			value={$theme}
+			onchange={(e) => changeTheme((e.target as HTMLSelectElement).value as 'light' | 'dark')}
+		>
+			<option value="light">{$t('configuration.themeLight')}</option>
+			<option value="dark">{$t('configuration.themeDark')}</option>
+		</select>
+	</section>
+
+	<section class="mb-4 pb-3 border-bottom">
+		<h2 class="h6 fw-semibold mb-2">{$t('configuration.orderOptions')}</h2>
+		<label class="d-flex align-items-center gap-2 mb-2" style="cursor: pointer; font-size: 0.95rem">
+			<input
+				class="form-check-input"
+				type="checkbox"
+				checked={$orderWeightEnabled}
+				onchange={toggleWeightEnabled}
+			/>
+			<span>{$t('configuration.enableOrderWeight')}</span>
+		</label>
+		<label class="d-flex align-items-center gap-2" style="cursor: pointer; font-size: 0.95rem">
+			<input
+				class="form-check-input"
+				type="checkbox"
+				checked={$customProductEnabled}
+				onchange={toggleCustomProductEnabled}
+			/>
+			<span>{$t('configuration.enableCustomProduct')}</span>
+		</label>
 	</section>
 
 	{#if dbPath || appVersion}
@@ -89,7 +189,10 @@
 				</p>
 			{/if}
 			{#if dbPath}
-				<p class="m-0 small text-body-secondary"><span class="fw-semibold">{$t('dashboard.dbPath')} :</span> <code class="bg-body-secondary px-1 rounded-1 small">{dbPath}</code></p>
+				<p class="m-0 small text-body-secondary">
+					<span class="fw-semibold">{$t('dashboard.dbPath')} :</span>
+					<code class="bg-body-secondary px-1 rounded-1 small">{dbPath}</code>
+				</p>
 			{/if}
 		</section>
 	{/if}
@@ -101,7 +204,10 @@
 		{#if categories.length === 0}
 			<p class="small text-muted mb-2">{$t('configuration.noCategoriesYet')}</p>
 		{:else}
-			<label class="d-flex align-items-center gap-2 py-1 fw-semibold border-bottom pb-2 mb-1" style="cursor: pointer; font-size: 0.9rem">
+			<label
+				class="d-flex align-items-center gap-2 py-1 fw-semibold border-bottom pb-2 mb-1"
+				style="cursor: pointer; font-size: 0.9rem"
+			>
 				<input
 					class="form-check-input"
 					type="checkbox"
@@ -111,7 +217,7 @@
 						if (allGrouped) {
 							ungroupAllCategories();
 						} else {
-							groupAllCategories(categories.map(c => c.id));
+							groupAllCategories(categories.map((c) => c.id));
 						}
 					}}
 				/>
@@ -119,23 +225,53 @@
 			</label>
 
 			{#each categories as cat (cat.id)}
-				<label class="d-flex align-items-center gap-2 py-1" style="cursor: pointer; font-size: 0.9rem">
+				<label
+					class="d-flex align-items-center gap-2 py-1"
+					style="cursor: pointer; font-size: 0.9rem"
+				>
 					<input
 						class="form-check-input"
 						type="checkbox"
 						checked={$groupedCategories.has(cat.id)}
 						onchange={() => toggleCategoryGrouped(cat.id)}
 					/>
-					<span class="d-inline-block flex-shrink-0 rounded-1" style="width: 14px; height: 14px; background: {cat.color};"></span>
+					<span
+						class="d-inline-block flex-shrink-0 rounded-1"
+						style="width: 14px; height: 14px; background: {cat.color};"
+					></span>
 					<span>{cat.label}</span>
 				</label>
 			{/each}
 		{/if}
 	</section>
 
+	<section class="mb-4 pb-3 border-bottom">
+		<h2 class="h6 fw-semibold mb-2">{$t('configuration.replaceDefaultsTitle')}</h2>
+		<p class="small text-muted mb-2">{$t('configuration.replaceDefaultsHint')}</p>
+		<div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+			<select class="form-select" style="max-width: 240px;" bind:value={selectedDataset}>
+				<option value="snackbar">{$t('configuration.datasetSnackbar')}</option>
+				<option value="clothing">{$t('configuration.datasetClothing')}</option>
+			</select>
+			<button
+				class="btn btn-outline-primary btn-sm fw-semibold"
+				onclick={loadDefaults}
+				disabled={isLoadingDefaults}
+			>
+				{isLoadingDefaults
+					? $t('configuration.replacingDefaults')
+					: $t('configuration.replaceDefaults')}
+			</button>
+		</div>
+	</section>
+
 	<section class="mb-4">
 		<div>
-			<button class="btn btn-outline-danger btn-sm fw-semibold flex-shrink-0" onclick={resetSales} disabled={isResettingSales}>
+			<button
+				class="btn btn-outline-danger btn-sm fw-semibold flex-shrink-0"
+				onclick={resetSales}
+				disabled={isResettingSales}
+			>
 				{isResettingSales ? $t('dashboard.resetting') : $t('dashboard.resetSales')}
 			</button>
 			<p class="m-0 small text-muted">{$t('dashboard.resetSalesWarning')}</p>
@@ -144,7 +280,11 @@
 
 	<section class="mb-4">
 		<div>
-			<button class="btn btn-outline-danger btn-sm fw-semibold flex-shrink-0" onclick={resetDatabase} disabled={isResetting}>
+			<button
+				class="btn btn-outline-danger btn-sm fw-semibold flex-shrink-0"
+				onclick={resetDatabase}
+				disabled={isResetting}
+			>
 				{isResetting ? $t('dashboard.resetting') : $t('dashboard.resetAll')}
 			</button>
 			<p class="m-0 small text-muted">{$t('dashboard.resetAllWarning')}</p>

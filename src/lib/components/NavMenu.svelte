@@ -1,27 +1,29 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n/index.ts';
+	import { shopName, theme, setConfigValue } from '#lib/stores/app-config.ts';
 
-	const links = [
+	const links: Array<{ href: null | string; labelKey?: null | string }> = [
 		{ href: '/', labelKey: 'nav.sales' },
+		{ href: '/dashboard', labelKey: 'nav.dashboard' },
 		{ href: '/products', labelKey: 'nav.products' },
 		{ href: '/categories', labelKey: 'nav.categories' },
 		{ href: '/orders', labelKey: 'nav.orders' },
-		{ href: '/dashboard', labelKey: 'nav.dashboard' },
 		{ href: '/configuration', labelKey: 'nav.configuration' }
 	];
 
 	let offcanvas: HTMLElement;
 
-	let isDarkMode: boolean = $state(false);
+	let isDarkMode = $derived($theme === 'dark');
 
-	$effect(() => {
-		changeMode(isDarkMode);
-	});
-
-	function changeMode(newMode: boolean) {
-		isDarkMode = newMode;
-		window?.document.body.setAttribute('data-bs-theme', isDarkMode ? 'dark' : 'light');
+	async function changeMode(newMode: boolean) {
+		const value = newMode ? 'dark' : 'light';
+		document.body.setAttribute('data-bs-theme', value);
+		try {
+			await setConfigValue('theme', value);
+		} catch (e) {
+			console.error('Failed to save theme', e);
+		}
 	}
 
 	function isActive(href: string): boolean {
@@ -29,7 +31,6 @@
 	}
 
 	function closeMenu() {
-		console.info('Close offcanvas', offcanvas);
 		window?.bootstrap?.Offcanvas?.getInstance(offcanvas)?.hide();
 	}
 </script>
@@ -47,6 +48,12 @@
 			<span class="navbar-toggler-icon"></span>
 		</button>
 
+		{#if $shopName}
+			<span class="navbar-brand mb-0 h1 fs-6 fw-semibold mx-2 text-truncate">
+				{$shopName}
+			</span>
+		{/if}
+
 		<div
 			class="offcanvas offcanvas-start"
 			tabindex="-1"
@@ -55,7 +62,9 @@
 			bind:this={offcanvas}
 		>
 			<div class="offcanvas-header">
-				<h5 class="offcanvas-title" id="navOffcanvasLabel">Menu</h5>
+				<h5 class="offcanvas-title" id="navOffcanvasLabel">
+					{$shopName || 'Menu'}
+				</h5>
 				<button
 					type="button"
 					class="btn-close"
@@ -66,7 +75,7 @@
 			</div>
 			<div class="offcanvas-body">
 				<ul class="navbar-nav gap-1">
-					{#each links as link (link.href)}
+					{#each links as link (link)}
 						<li class="nav-item">
 							<a
 								class="nav-link rounded {isActive(link.href) ? 'active fw-semibold' : ''}"
@@ -82,8 +91,12 @@
 			</div>
 		</div>
 
-		<div>
-			<button class="btn btn-outline-secondary" type="button" onclick="{() => changeMode(!isDarkMode)}">
+		<div class="ms-auto">
+			<button
+				class="btn btn-outline-secondary"
+				type="button"
+				onclick={() => changeMode(!isDarkMode)}
+			>
 				{isDarkMode ? '☀' : '🌙'}
 			</button>
 		</div>

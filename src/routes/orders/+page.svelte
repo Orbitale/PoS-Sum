@@ -70,7 +70,7 @@
 			q($t('orders.csvColDate')),
 			q($t('orders.csvColTotal')),
 			q($t('orders.csvColPaymentMethod')),
-			q($t('orders.csvColWeight')),
+			q($t('orders.csvColWeight'))
 		];
 		for (const name of productNames) {
 			header.push(q(`${name} (${$t('orders.colUnitPrice')})`));
@@ -92,7 +92,7 @@
 				q(order.created_at),
 				q(centsToEuros(order.total)),
 				q(order.payment_method),
-				q(order.weight != null ? String(order.weight) : ''),
+				q(order.weight != null ? String(order.weight) : '')
 			];
 			for (const name of productNames) {
 				const item = itemsByProduct.get(name);
@@ -126,18 +126,39 @@
 	</div>
 
 	{#if isLoading}
-		<div class="d-flex align-items-center justify-content-center text-muted fs-5" style="height: 200px">{$t('orders.loading')}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-muted fs-5"
+			style="height: 200px"
+		>
+			{$t('orders.loading')}
+		</div>
 	{:else if error}
-		<div class="d-flex align-items-center justify-content-center text-danger fs-5" style="height: 200px">{error}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-danger fs-5"
+			style="height: 200px"
+		>
+			{error}
+		</div>
 	{:else if orders.length === 0}
-		<div class="d-flex align-items-center justify-content-center text-muted fs-5" style="height: 200px">{$t('orders.empty')}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-muted fs-5"
+			style="height: 200px"
+		>
+			{$t('orders.empty')}
+		</div>
 	{:else}
 		<div class="d-flex flex-column gap-3">
 			{#each orders as order (order.id)}
 				<div class="border rounded-3 overflow-hidden">
-					<div class="d-flex align-items-center gap-3 p-3 bg-body-secondary border-bottom">
+					<div class="d-flex align-items-center gap-3 px-3 py-1 bg-body-secondary border-bottom">
 						<span class="small fw-semibold">{formatDateTime(order.created_at)}</span>
-						<span class="badge rounded-pill {order.payment_method === 'cash' ? 'bg-success-subtle text-success-emphasis' : 'bg-primary-subtle text-primary-emphasis'}">
+						<span
+							class="badge rounded-pill {order.payment_method === 'cash'
+								? 'bg-success-subtle text-success-emphasis'
+								: order.payment_method === 'check'
+									? 'bg-warning-subtle text-warning-emphasis'
+									: 'bg-primary-subtle text-primary-emphasis'}"
+						>
 							{$t('orders.paymentMethod.' + order.payment_method)}
 						</span>
 						{#if order.weight != null}
@@ -148,16 +169,29 @@
 					<table class="table table-sm mb-0">
 						<thead>
 							<tr>
-								<th class="text-uppercase small text-muted fw-semibold">{$t('orders.colProduct')}</th>
-								<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">{$t('orders.colQty')}</th>
-								<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">{$t('orders.colUnitPrice')}</th>
-								<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">{$t('orders.colSubtotal')}</th>
+								<th class="text-uppercase small text-muted fw-semibold">
+									{$t('orders.colProduct')}
+								</th>
+								<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">
+									{$t('orders.colQty')}
+								</th>
+								<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">
+									{$t('orders.colUnitPrice')}
+								</th>
+								<th class="text-uppercase small text-muted fw-semibold text-end text-nowrap">
+									{$t('orders.colSubtotal')}
+								</th>
 							</tr>
 						</thead>
 						<tbody>
 							{#each order.items as item (item.id)}
 								<tr>
-									<td class="p-1">{item.product_name}</td>
+									<td class="p-1">
+										{item.product_name}
+										{#if item.comment}
+											<div class="small text-muted fst-italic">{item.comment}</div>
+										{/if}
+									</td>
 									<td class="text-end text-nowrap">{item.quantity}</td>
 									<td class="text-end text-nowrap">{formatPrice(item.unit_price)}</td>
 									<td class="text-end text-nowrap">{formatPrice(item.total)}</td>

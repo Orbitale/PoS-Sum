@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CartItem } from '#lib/types.ts';
+	import type { CartItem, PaymentMethod } from '#lib/types.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Numpad from './Numpad.svelte';
@@ -7,13 +7,13 @@
 	interface Props {
 		items: CartItem[];
 		total: number;
-		onConfirm: (paymentMethod: 'cash' | 'card') => void;
+		onConfirm: (paymentMethod: PaymentMethod) => void;
 		onCancel: () => void;
 	}
 
 	let { items, total, onConfirm, onCancel }: Props = $props();
 
-	let paymentMethod = $state<'cash' | 'card' | null>(null);
+	let paymentMethod = $state<PaymentMethod | null>(null);
 	let cashReceived = $state('');
 	let isSubmitting = $state(false);
 
@@ -36,7 +36,7 @@
 		);
 	});
 
-	function selectPayment(method: 'cash' | 'card') {
+	function selectPayment(method: PaymentMethod) {
 		paymentMethod = method;
 		cashReceived = '';
 	}
@@ -66,10 +66,11 @@
 	}
 </script>
 
-<div class="modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+<div
+	class="modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+>
 	<div class="checkout-modal bg-body rounded-4 p-3">
 		<div class="checkout-inner">
-
 			<div class="checkout-items">
 				<h2 class="h5">{$t('checkout.title')}</h2>
 
@@ -77,8 +78,13 @@
 					<tbody>
 						{#each items as item (item.product.id)}
 							<tr>
-								<td>{item.quantity}x {item.product.name}</td>
-								<td>{formatPrice(item.product.price * item.quantity)}</td>
+								<td>
+									{item.quantity}x {item.product.name}
+									{#if item.comment}
+										<div class="small text-muted fst-italic">{item.comment}</div>
+									{/if}
+								</td>
+								<td>{formatPrice(item.unitPrice * item.quantity)}</td>
 							</tr>
 						{/each}
 						<tr class="table-info">
@@ -100,7 +106,12 @@
 					</div>
 					<label class="d-flex flex-column gap-1 fw-semibold" style="font-size:0.95rem">
 						{$t('checkout.amountReceived')}
-						<input class="form-control text-end fs-5" type="text" placeholder={formattedTotal} value={cashReceived} />
+						<input
+							class="form-control text-end fs-5"
+							type="text"
+							placeholder={formattedTotal}
+							value={cashReceived}
+						/>
 					</label>
 					<div class="mt-2 fs-5 text-success">
 						{$t('checkout.change')} <strong>{formatPrice(change)}</strong>
@@ -109,27 +120,48 @@
 			</div>
 
 			<div class="checkout-actions">
-				<div class="d-flex gap-2 mb-2">
+				<div class="d-flex gap-2 mb-2 flex-wrap">
 					<button
-							class="btn flex-fill fw-semibold {paymentMethod === 'cash' ? 'btn-primary' : 'btn-outline-secondary'}"
-							style="min-height: 48px;"
-							onclick={() => selectPayment('cash')}
+						class="btn flex-fill fw-semibold {paymentMethod === 'cash'
+							? 'btn-primary'
+							: 'btn-outline-secondary'}"
+						style="min-height: 48px;"
+						onclick={() => selectPayment('cash')}
 					>
 						💵 {$t('checkout.cash')}
 					</button>
 					<button
-							class="btn flex-fill fw-semibold {paymentMethod === 'card' ? 'btn-primary' : 'btn-outline-secondary'}"
-							style="min-height: 48px;"
-							onclick={() => selectPayment('card')}
+						class="btn flex-fill fw-semibold {paymentMethod === 'card'
+							? 'btn-primary'
+							: 'btn-outline-secondary'}"
+						style="min-height: 48px;"
+						onclick={() => selectPayment('card')}
 					>
 						💳 {$t('checkout.card')}
 					</button>
+					<button
+						class="btn flex-fill fw-semibold {paymentMethod === 'check'
+							? 'btn-primary'
+							: 'btn-outline-secondary'}"
+						style="min-height: 48px;"
+						onclick={() => selectPayment('check')}
+					>
+						🧾 {$t('checkout.check')}
+					</button>
 				</div>
 				<div class="d-flex gap-2">
-					<button class="btn btn-success flex-fill fw-semibold" onclick={handleConfirm} disabled={!canConfirm}>
+					<button
+						class="btn btn-success flex-fill fw-semibold"
+						onclick={handleConfirm}
+						disabled={!canConfirm}
+					>
 						{isSubmitting ? $t('checkout.submitting') : $t('checkout.confirm')}
 					</button>
-					<button class="btn btn-danger flex-fill fw-semibold" onclick={onCancel} disabled={isSubmitting}>
+					<button
+						class="btn btn-danger flex-fill fw-semibold"
+						onclick={onCancel}
+						disabled={isSubmitting}
+					>
 						{$t('checkout.cancel')}
 					</button>
 				</div>
@@ -171,8 +203,8 @@
 			grid-template-columns: 1fr 1fr;
 			grid-template-rows: 1fr auto;
 			grid-template-areas:
-				"items payment"
-				"actions actions";
+				'items payment'
+				'actions actions';
 			gap: 1rem;
 		}
 		.checkout-items {

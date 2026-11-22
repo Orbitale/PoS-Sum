@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS orders (
     id              TEXT PRIMARY KEY NOT NULL,
     created_at      TEXT NOT NULL,
     total           INTEGER NOT NULL,
-    payment_method  TEXT NOT NULL CHECK (payment_method IN ('cash', 'card'))
+    payment_method  TEXT NOT NULL CHECK (payment_method IN ('cash', 'card', 'check'))
 );
 
 CREATE TABLE IF NOT EXISTS order_items (

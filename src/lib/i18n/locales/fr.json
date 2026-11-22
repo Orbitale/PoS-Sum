@@ -5,7 +5,7 @@
 		"cancel": "Annuler"
 	},
 	"nav": {
-		"sales": "Ventes",
+		"sales": "Point de vente",
 		"products": "Produits",
 		"categories": "Catégories",
 		"orders": "Commandes",
@@ -19,13 +19,32 @@
 		"weightPlaceholder": "Optionnel",
 		"total": "Total",
 		"clear": "Effacer",
-		"checkout": "Encaisser"
+		"checkout": "Encaisser",
+		"recommendedPriceTooltip": "Ce prix n'est qu'une recommandation.",
+		"recommendedTotalTooltip": "Le total peut être ajusté car cette commande contient un prix recommandé.",
+		"editPrice": "Modifier le prix",
+		"editPriceTitle": "Modifier le prix unitaire",
+		"editPriceLabel": "Prix unitaire",
+		"editTotal": "Modifier le total",
+		"editTotalTitle": "Modifier le total de la commande",
+		"editTotalLabel": "Total",
+		"originalTotal": "Original",
+		"minimumTotal": "Minimum",
+		"totalBelowMinimum": "Le total ne peut pas être inférieur à {minimum}",
+		"confirmPrice": "Confirmer",
+		"addComment": "Ajouter un commentaire",
+		"addCommentSmall": "(annoter)",
+		"editCommentTitle": "Commentaire de ligne",
+		"editCommentLabel": "Commentaire",
+		"confirmComment": "Enregistrer le commentaire",
+		"cancel": "Annuler"
 	},
 	"checkout": {
 		"title": "Encaissement",
 		"total": "Total",
 		"cash": "Espèces",
 		"card": "Carte",
+		"check": "Chèque",
 		"amountReceived": "Montant reçu",
 		"change": "Monnaie :",
 		"cancel": "Annuler",
@@ -39,6 +58,8 @@
 		"name": "Nom",
 		"namePlaceholder": "Nom du produit",
 		"priceLabel": "Prix (EUR)",
+		"fixedPrice": "Prix fixe",
+		"fixedPriceHint": "Décochez pour permettre de modifier le prix à chaque commande (prix recommandé).",
 		"category": "Catégorie",
 		"available": "Disponible",
 		"cancel": "Annuler",
@@ -62,7 +83,14 @@
 		"loading": "Chargement des produits...",
 		"loadError": "Échec du chargement des données : {error}",
 		"orderError": "Échec de la commande : {error}",
-		"back": "RETOUR"
+		"back": "RETOUR",
+		"createCustomProduct": "Créer un produit personnalisé",
+		"customProductTitle": "Produit personnalisé",
+		"customProductName": "Nom",
+		"customProductNamePlaceholder": "Nom du produit",
+		"customProductPrice": "Prix (EUR)",
+		"customProductCancel": "Annuler",
+		"customProductAdd": "Ajouter à la commande"
 	},
 	"products": {
 		"title": "Produits",
@@ -71,9 +99,12 @@
 		"empty": "Aucun produit. Ajoutez votre premier produit !",
 		"colName": "Nom",
 		"colPrice": "Prix",
+		"colFixedPrice": "Type de prix",
 		"colCategory": "Catégorie",
 		"colAvailable": "Disponible",
 		"colActions": "Actions",
+		"fixedPrice": "Fixe",
+		"openPrice": "Libre",
 		"yes": "Oui",
 		"no": "Non",
 		"edit": "Modifier",
@@ -111,7 +142,8 @@
 		"colSubtotal": "Sous-total",
 		"paymentMethod": {
 			"cash": "Espèces",
-			"card": "Carte"
+			"card": "Carte",
+			"check": "Chèque"
 		},
 		"exportCsv": "Exporter CSV",
 		"csvColId": "ID",
@@ -119,7 +151,9 @@
 		"csvColTotal": "Total €",
 		"csvColPaymentMethod": "Mode de paiement",
 		"csvColWeight": "Poids (Kg)",
-		"weight": "Poids"
+		"csvColComment": "Commentaire",
+		"weight": "Poids",
+		"comment": "Commentaire"
 	},
 	"dashboard": {
 		"title": "Tableau de bord",
@@ -140,7 +174,8 @@
 		"totalRevenue": "Chiffre d'affaires total",
 		"paymentMethod": {
 			"cash": "Espèces",
-			"card": "Carte"
+			"card": "Carte",
+			"check": "Chèque"
 		},
 		"exportCsv": "Exporter CSV",
 		"appInfo": "Infos application",
@@ -154,16 +189,33 @@
 		"resetFailed": "Échec de la réinitialisation : {error}",
 		"resetSalesFailed": "Échec de la réinitialisation : {error}",
 		"resetSalesWarning": "Cela supprimera définitivement toutes les commandes et données de ventes.",
-		"resetAllWarning": "Cela supprimera définitivement TOUTES les données, y compris les produits, catégories et commandes."
+		"resetAllWarning": "Cela supprimera définitivement TOUTES les données, y compris les produits, catégories et commandes. Les données d'exemple ne seront pas rechargées automatiquement."
 	},
 	"configuration": {
 		"title": "Configuration",
+		"shopName": "Nom de la boutique",
+		"shopNamePlaceholder": "Affiché dans la barre de navigation",
+		"save": "Enregistrer",
 		"language": "Langue",
+		"theme": "Thème",
+		"themeLight": "Clair",
+		"themeDark": "Sombre",
+		"orderOptions": "Options de commande",
+		"enableOrderWeight": "Activer le champ \"poids\" sur la page \"Commande\"",
+		"enableCustomProduct": "Autoriser l'ajout d'un produit personnalisé à la volée",
 		"categoryGrouping": "Regroupement des catégories",
 		"categoryGroupingHint": "Cochez une catégorie pour regrouper ses produits derrière un seul bouton sur l'écran de vente.",
 		"groupAll": "Tout regrouper",
 		"ungroupAll": "Tout dégrouper",
-		"noCategoriesYet": "Aucune catégorie pour le moment."
+		"noCategoriesYet": "Aucune catégorie pour le moment.",
+		"replaceDefaultsTitle": "Catalogue d'exemple",
+		"replaceDefaults": "Remplacer les produits et catégories par les données d'exemple",
+		"replaceDefaultsHint": "Cela remplace les produits et catégories actuels. Les commandes existantes sont conservées.",
+		"replaceDefaultsConfirm": "Remplacer tous les produits et catégories par le jeu de données sélectionné ? Cette action est irréversible.",
+		"replaceDefaultsFailed": "Échec du chargement des données d'exemple : {error}",
+		"replacingDefaults": "Chargement...",
+		"datasetSnackbar": "Snack-bar",
+		"datasetClothing": "Boutique de vêtements (prix libres)"
 	},
 	"languages": {
 		"fr": "Français",

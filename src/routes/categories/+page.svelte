@@ -86,15 +86,32 @@
 <div class="mx-auto px-4 pb-4">
 	<div class="d-flex align-items-center justify-content-between pt-4 pb-3">
 		<h1 class="h4 m-0 fw-semibold">{$t('categories.title')}</h1>
-		<button class="btn btn-primary fw-semibold" onclick={openCreate}>{$t('categories.addButton')}</button>
+		<button class="btn btn-primary fw-semibold" onclick={openCreate}>
+			{$t('categories.addButton')}
+		</button>
 	</div>
 
 	{#if isLoading}
-		<div class="d-flex align-items-center justify-content-center text-muted fs-5" style="height: 200px">{$t('categories.loading')}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-muted fs-5"
+			style="height: 200px"
+		>
+			{$t('categories.loading')}
+		</div>
 	{:else if error}
-		<div class="d-flex align-items-center justify-content-center text-danger fs-5" style="height: 200px">{error}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-danger fs-5"
+			style="height: 200px"
+		>
+			{error}
+		</div>
 	{:else if categories.length === 0}
-		<div class="d-flex align-items-center justify-content-center text-muted fs-5" style="height: 200px">{$t('categories.empty')}</div>
+		<div
+			class="d-flex align-items-center justify-content-center text-muted fs-5"
+			style="height: 200px"
+		>
+			{$t('categories.empty')}
+		</div>
 	{:else}
 		<div class="table-responsive">
 			<table class="table">
@@ -112,14 +129,23 @@
 							<td><code class="bg-body-secondary px-2 py-1 rounded-1 small">{cat.id}</code></td>
 							<td>{cat.label}</td>
 							<td>
-								<span class="d-inline-block rounded-1 align-middle me-2 border" style="width: 20px; height: 20px; background: {cat.color};"></span>
+								<span
+									class="d-inline-block rounded-1 align-middle me-2 border"
+									style="width: 20px; height: 20px; background: {cat.color};"
+								></span>
 								<code class="small">{cat.color}</code>
 							</td>
 							<td class="d-flex gap-1">
-								<button class="btn btn-outline-secondary btn-sm fw-semibold" onclick={() => openEdit(cat)}>
+								<button
+									class="btn btn-outline-secondary btn-sm fw-semibold"
+									onclick={() => openEdit(cat)}
+								>
 									{$t('categories.edit')}
 								</button>
-								<button class="btn btn-outline-danger btn-sm fw-semibold" onclick={() => deleteCategory(cat)}>
+								<button
+									class="btn btn-outline-danger btn-sm fw-semibold"
+									onclick={() => deleteCategory(cat)}
+								>
 									{$t('categories.delete')}
 								</button>
 							</td>
@@ -136,7 +162,7 @@
 {/if}
 
 <style>
-    th {
-        text-transform: uppercase;
-    }
+	th {
+		text-transform: uppercase;
+	}
 </style>

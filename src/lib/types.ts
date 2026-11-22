@@ -16,6 +16,17 @@ export interface UpdateCategoryPayload {
 	color: string;
 }
 
+export interface ConfigurationEntry {
+	id: string;
+	name: string;
+	value: string;
+}
+
+export interface UpdateConfigurationPayload {
+	id: string;
+	value: string;
+}
+
 export interface Product {
 	id: string;
 	name: string;
@@ -24,13 +35,17 @@ export interface Product {
 	/** Foreign key referencing the categories table. */
 	category_id: string;
 	available: boolean;
+	/** When false, the catalog price is only a recommendation. */
+	fixed_price: boolean;
 }
+
+export type PaymentMethod = 'cash' | 'card' | 'check';
 
 export interface Order {
 	id: string;
 	created_at: string;
 	total: number;
-	payment_method: 'cash' | 'card';
+	payment_method: PaymentMethod;
 	/** Optional weight in kilograms. */
 	weight: number | null;
 }
@@ -43,6 +58,7 @@ export interface OrderItem {
 	unit_price: number;
 	quantity: number;
 	total: number;
+	comment: string;
 }
 
 /** Flattened via #[serde(flatten)] on the Rust side. */
@@ -55,11 +71,12 @@ export interface CreateOrderItemPayload {
 	product_name: string;
 	unit_price: number;
 	quantity: number;
+	comment?: string;
 }
 
 export interface CreateOrderPayload {
 	items: CreateOrderItemPayload[];
-	payment_method: 'cash' | 'card';
+	payment_method: PaymentMethod;
 	/** Optional weight in kilograms. */
 	weight?: number | null;
 }
@@ -69,6 +86,7 @@ export interface CreateProductPayload {
 	/** Price in cents. */
 	price: number;
 	category_id: string;
+	fixed_price?: boolean;
 }
 
 export interface UpdateProductPayload {
@@ -78,6 +96,7 @@ export interface UpdateProductPayload {
 	price: number;
 	category_id: string;
 	available: boolean;
+	fixed_price: boolean;
 }
 
 // ── App Version ──────────────────────────────────────────────────────────────
@@ -98,7 +117,7 @@ export interface ProductSalesSummary {
 }
 
 export interface PaymentMethodBreakdown {
-	payment_method: 'cash' | 'card';
+	payment_method: PaymentMethod;
 	total_revenue: number;
 	transaction_count: number;
 }
@@ -110,8 +129,11 @@ export interface DashboardSummary {
 	per_payment_method: PaymentMethodBreakdown[];
 }
 
-/** Client-side cart item (product + chosen quantity). */
+/** Client-side cart item (product + chosen quantity + sale overrides). */
 export interface CartItem {
 	product: Product;
 	quantity: number;
+	/** Unit price in cents for this cart line (may differ from product.price). */
+	unitPrice: number;
+	comment: string;
 }

@@ -5,7 +5,7 @@
 		"cancel": "Cancel"
 	},
 	"nav": {
-		"sales": "Sales",
+		"sales": "Point of sale",
 		"products": "Products",
 		"categories": "Categories",
 		"orders": "Orders",
@@ -19,13 +19,32 @@
 		"weightPlaceholder": "Optional",
 		"total": "Total",
 		"clear": "Clear",
-		"checkout": "Checkout"
+		"checkout": "Checkout",
+		"recommendedPriceTooltip": "This price is only a recommendation.",
+		"recommendedTotalTooltip": "The total can be adjusted because this order includes a recommended price.",
+		"editPrice": "Edit price",
+		"editPriceTitle": "Edit unit price",
+		"editPriceLabel": "Unit price",
+		"editTotal": "Edit total",
+		"editTotalTitle": "Edit order total",
+		"editTotalLabel": "Total",
+		"originalTotal": "Original",
+		"minimumTotal": "Minimum",
+		"totalBelowMinimum": "Total cannot be below {minimum}",
+		"confirmPrice": "Confirm",
+		"addComment": "Add comment",
+		"addCommentSmall": "(add note)",
+		"editCommentTitle": "Line comment",
+		"editCommentLabel": "Comment",
+		"confirmComment": "Save comment",
+		"cancel": "Cancel"
 	},
 	"checkout": {
 		"title": "Checkout",
 		"total": "Total",
 		"cash": "Cash",
 		"card": "Card",
+		"check": "Check",
 		"amountReceived": "Amount received",
 		"change": "Change:",
 		"cancel": "Cancel",
@@ -39,6 +58,8 @@
 		"name": "Name",
 		"namePlaceholder": "Product name",
 		"priceLabel": "Price (EUR)",
+		"fixedPrice": "Fixed price",
+		"fixedPriceHint": "Uncheck to allow changing the price on each order (recommended price).",
 		"category": "Category",
 		"available": "Available",
 		"cancel": "Cancel",
@@ -62,7 +83,14 @@
 		"loading": "Loading products...",
 		"loadError": "Failed to load data: {error}",
 		"orderError": "Order failed: {error}",
-		"back": "BACK"
+		"back": "BACK",
+		"createCustomProduct": "Create custom product",
+		"customProductTitle": "Custom product",
+		"customProductName": "Name",
+		"customProductNamePlaceholder": "Product name",
+		"customProductPrice": "Price (EUR)",
+		"customProductCancel": "Cancel",
+		"customProductAdd": "Add to order"
 	},
 	"products": {
 		"title": "Products",
@@ -71,9 +99,12 @@
 		"empty": "No products yet. Add your first product!",
 		"colName": "Name",
 		"colPrice": "Price",
+		"colFixedPrice": "Price type",
 		"colCategory": "Category",
 		"colAvailable": "Available",
 		"colActions": "Actions",
+		"fixedPrice": "Fixed",
+		"openPrice": "Open",
 		"yes": "Yes",
 		"no": "No",
 		"edit": "Edit",
@@ -111,7 +142,8 @@
 		"colSubtotal": "Subtotal",
 		"paymentMethod": {
 			"cash": "Cash",
-			"card": "Card"
+			"card": "Card",
+			"check": "Check"
 		},
 		"exportCsv": "Export CSV",
 		"csvColId": "ID",
@@ -119,7 +151,9 @@
 		"csvColTotal": "Total €",
 		"csvColPaymentMethod": "Payment method",
 		"csvColWeight": "Weight (Kg)",
-		"weight": "Weight"
+		"csvColComment": "Comment",
+		"weight": "Weight",
+		"comment": "Comment"
 	},
 	"dashboard": {
 		"title": "Dashboard",
@@ -140,7 +174,8 @@
 		"totalRevenue": "Total revenue",
 		"paymentMethod": {
 			"cash": "Cash",
-			"card": "Card"
+			"card": "Card",
+			"check": "Check"
 		},
 		"exportCsv": "Export CSV",
 		"appInfo": "App info",
@@ -154,16 +189,33 @@
 		"resetFailed": "Reset failed: {error}",
 		"resetSalesFailed": "Reset failed: {error}",
 		"resetSalesWarning": "This will permanently erase all orders and sales data.",
-		"resetAllWarning": "This will permanently erase ALL data including products, categories, and orders."
+		"resetAllWarning": "This will permanently erase ALL data including products, categories, and orders. Placeholder catalog data will not be reloaded automatically."
 	},
 	"configuration": {
 		"title": "Configuration",
+		"shopName": "Shop name",
+		"shopNamePlaceholder": "Displayed in the navigation bar",
+		"save": "Save",
 		"language": "Language",
+		"theme": "Theme",
+		"themeLight": "Light",
+		"themeDark": "Dark",
+		"orderOptions": "Order options",
+		"enableOrderWeight": "Activate \"weight\" field on the \"Order\" page",
+		"enableCustomProduct": "Allow adding custom product on-the-fly",
 		"categoryGrouping": "Category grouping",
 		"categoryGroupingHint": "Check a category to group its products behind a single button on the Sales screen.",
 		"groupAll": "Group all",
 		"ungroupAll": "Ungroup all",
-		"noCategoriesYet": "No categories yet."
+		"noCategoriesYet": "No categories yet.",
+		"replaceDefaultsTitle": "Placeholder catalog",
+		"replaceDefaults": "Replace products and categories with default placeholder data",
+		"replaceDefaultsHint": "This replaces the current products and categories. Existing orders are kept.",
+		"replaceDefaultsConfirm": "Replace all products and categories with the selected placeholder dataset? This cannot be undone.",
+		"replaceDefaultsFailed": "Failed to load placeholder data: {error}",
+		"replacingDefaults": "Loading...",
+		"datasetSnackbar": "Snackbar",
+		"datasetClothing": "Clothing shop (open prices)"
 	},
 	"languages": {
 		"fr": "Français",
