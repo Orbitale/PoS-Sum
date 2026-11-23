@@ -22,6 +22,8 @@
 		"checkout": "Checkout",
 		"recommendedPriceTooltip": "This price is only a recommendation.",
 		"recommendedTotalTooltip": "The total can be adjusted because this order includes a recommended price.",
+		"decreaseQuantity": "Decrease quantity of {name}",
+		"increaseQuantity": "Increase quantity of {name}",
 		"editPrice": "Edit price",
 		"editPriceTitle": "Edit unit price",
 		"editPriceLabel": "Unit price",

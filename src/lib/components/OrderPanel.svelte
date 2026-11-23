@@ -126,18 +126,26 @@
 						<td class="col-sm-1">
 							<div class="d-flex align-items-center gap-1">
 								<button
+									type="button"
 									class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center fw-bold"
 									style="width: 32px; height: 32px; padding: 0; font-size: 1.1rem;"
+									aria-label={$t('order.decreaseQuantity', { name: item.product.name })}
 									onclick={() => onDecrease(item.product.id)}
 								>
 									&minus;
 								</button>
-								<span class="fw-semibold text-center" style="min-width: 24px;">
+								<span
+									class="fw-semibold text-center"
+									style="min-width: 24px;"
+									data-testid="cart-qty-{item.product.id}"
+								>
 									{item.quantity}
 								</span>
 								<button
+									type="button"
 									class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center fw-bold"
 									style="width: 32px; height: 32px; padding: 0; font-size: 1.1rem;"
+									aria-label={$t('order.increaseQuantity', { name: item.product.name })}
 									onclick={() => onIncrease(item.product.id)}
 								>
 									&plus;

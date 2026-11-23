@@ -22,6 +22,8 @@
 		"checkout": "Encaisser",
 		"recommendedPriceTooltip": "Ce prix n'est qu'une recommandation.",
 		"recommendedTotalTooltip": "Le total peut être ajusté car cette commande contient au moins un prix libre.",
+		"decreaseQuantity": "Diminuer la quantité de {name}",
+		"increaseQuantity": "Augmenter la quantité de {name}",
 		"editPrice": "Modifier le prix",
 		"editPriceTitle": "Modifier le prix unitaire",
 		"editPriceLabel": "Prix unitaire",

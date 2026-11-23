@@ -1,7 +1,12 @@
-import { APP_TARGET } from '#lib/api.ts';
+import { APP_TARGET, type AppTarget } from '#lib/api.ts';
 
-export async function downloadCsv(filename: string, csv: string): Promise<void> {
-	if (APP_TARGET === 'tauri') {
+export async function downloadCsv(
+	filename: string,
+	csv: string,
+	/** Override for tests; defaults to the build-time app target. */
+	target: AppTarget = APP_TARGET
+): Promise<void> {
+	if (target === 'tauri') {
 		const { save } = await import('@tauri-apps/plugin-dialog');
 		const { writeFile } = await import('@tauri-apps/plugin-fs');
 
@@ -16,13 +21,14 @@ export async function downloadCsv(filename: string, csv: string): Promise<void> 
 
 		const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 		await writeFile(path, blob.stream());
-	} else {
-		const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = filename;
-		a.click();
-		URL.revokeObjectURL(url);
+		return;
 	}
+
+	const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	a.click();
+	URL.revokeObjectURL(url);
 }
