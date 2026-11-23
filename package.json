@@ -9,6 +9,8 @@
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "vitest run",
+		"test:watch": "vitest",
 		"tauri": "tauri",
 		"lint": "prettier --check .",
 		"format": "prettier --write ."
@@ -28,12 +30,14 @@
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tauri-apps/cli": "^2.12.6",
 		"@types/bootstrap": "^5.2.11",
+		"@types/node": "^26.6.6",
 		"prettier": "^3.10.1",
 		"prettier-plugin-svelte": "^4.2.0",
 		"svelte": "^5.58.0",
 		"svelte-check": "^4.7.8",
 		"typescript": "^6.0.3",
-		"vite": "^8.3.8"
+		"vite": "^8.3.8",
+		"vitest": "^3.2.7"
 	},
 	"imports": {
 		"#lib": "./src/lib/index.js",

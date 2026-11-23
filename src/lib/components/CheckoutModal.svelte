@@ -1,8 +1,9 @@
 <script lang="ts">
 	import type { CartItem, PaymentMethod } from '#lib/types.ts';
+	import { formatCentsToInput, parseEurosToCents } from '#lib/money/index.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
 	import { t } from '#lib/i18n/index.ts';
-	import Numpad from './Numpad.svelte';
+	import AmountField from './AmountField.svelte';
 
 	interface Props {
 		items: CartItem[];
@@ -18,13 +19,11 @@
 	let isSubmitting = $state(false);
 
 	let numberOfProducts = $derived(items.reduce((acc, item) => acc + item.quantity, 0));
-	let formattedTotal = $derived((total / 100).toFixed(2).replace('.', ','));
+	let formattedTotal = $derived(formatCentsToInput(total));
 
-	let cashReceivedCents = $derived.by(() => {
-		if (cashReceived.trim() === '') return total;
-		const val = parseFloat(cashReceived.replace(',', '.'));
-		return isNaN(val) ? 0 : Math.round(val * 100);
-	});
+	let cashReceivedCents = $derived(
+		cashReceived.trim() === '' ? total : parseEurosToCents(cashReceived)
+	);
 
 	let change = $derived(cashReceivedCents - total);
 
@@ -39,22 +38,6 @@
 	function selectPayment(method: PaymentMethod) {
 		paymentMethod = method;
 		cashReceived = '';
-	}
-
-	function handleNumpadKey(key: string) {
-		if (key === 'backspace') {
-			cashReceived = cashReceived.slice(0, -1);
-		} else if (key.startsWith(',')) {
-			if (!cashReceived.includes(',')) {
-				cashReceived += key;
-			}
-			if (key.length > 1) {
-				// cases for ",00" or ",50"
-				cashReceived = cashReceived.replace(/,.*$/gi, key);
-			}
-		} else {
-			cashReceived += key;
-		}
 	}
 
 	async function handleConfirm() {
@@ -101,18 +84,14 @@
 
 			<div class="checkout-payment">
 				<div class:visible={paymentMethod === 'cash'} class:invisible={paymentMethod !== 'cash'}>
-					<div class="mt-3">
-						<Numpad onKeyPress={handleNumpadKey} />
-					</div>
-					<label class="d-flex flex-column gap-1 fw-semibold" style="font-size:0.95rem">
-						{$t('checkout.amountReceived')}
-						<input
-							class="form-control text-end fs-5"
-							type="text"
-							placeholder={formattedTotal}
-							value={cashReceived}
-						/>
-					</label>
+					<AmountField
+						id="checkout-cash-received"
+						label={$t('checkout.amountReceived')}
+						value={cashReceived}
+						placeholder={formattedTotal}
+						allowNegative={false}
+						onValueChange={(v) => (cashReceived = v)}
+					/>
 					<div class="mt-2 fs-5 text-success">
 						{$t('checkout.change')} <strong>{formatPrice(change)}</strong>
 					</div>

@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { parseEurosToCents } from '#lib/money/index.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
 	import { isBackdropClick } from '#lib/utils/modal.ts';
-	import Numpad from './Numpad.svelte';
+	import AmountField from './AmountField.svelte';
 
 	interface Props {
 		onConfirm: (data: { name: string; priceCents: number }) => void;
@@ -14,59 +15,8 @@
 	let name = $state('');
 	let priceInput = $state('');
 
-	let priceCents = $derived.by(() => {
-		if (priceInput.trim() === '') return 0;
-		const val = parseFloat(priceInput.replace(',', '.'));
-		return isNaN(val) ? 0 : Math.round(val * 100);
-	});
-
+	let priceCents = $derived(parseEurosToCents(priceInput));
 	let canConfirm = $derived(name.trim().length > 0);
-
-	function sanitizeAmountInput(raw: string): string {
-		let value = raw.replace(/[^\d,.\-]/g, '');
-		const negative = value.startsWith('-');
-		value = value.replace(/-/g, '');
-		value = (negative ? '-' : '') + value;
-
-		const separatorMatch = value.match(/[,.]/);
-		if (!separatorMatch || separatorMatch.index === undefined) {
-			return value;
-		}
-
-		const sep = separatorMatch[0];
-		const idx = separatorMatch.index;
-		const intPart = value.slice(0, idx).replace(/[,.]/g, '');
-		const fracPart = value.slice(idx + 1).replace(/[,.]/g, '');
-		return `${intPart}${sep}${fracPart}`;
-	}
-
-	function handlePriceInput(event: Event) {
-		const input = event.currentTarget as HTMLInputElement;
-		priceInput = sanitizeAmountInput(input.value);
-		input.value = priceInput;
-	}
-
-	function handleNumpadKey(key: string) {
-		if (key === 'backspace') {
-			priceInput = priceInput.slice(0, -1);
-		} else if (key === '-') {
-			if (priceInput.startsWith('-')) {
-				priceInput = priceInput.slice(1);
-			} else {
-				priceInput = '-' + priceInput;
-			}
-		} else if (key.startsWith(',')) {
-			if (!priceInput.includes(',') && !priceInput.includes('.')) {
-				priceInput += ',';
-			}
-			if (key.length > 1) {
-				priceInput = priceInput.replace(/[,.].*$/i, key);
-			}
-		} else {
-			priceInput += key;
-		}
-		priceInput = sanitizeAmountInput(priceInput);
-	}
 
 	function handleSubmit() {
 		if (!canConfirm) {
@@ -107,24 +57,13 @@
 			/>
 		</div>
 
-		<div class="mb-3">
-			<label class="form-label fw-semibold" for="custom-product-price">
-				{$t('sales.customProductPrice')}
-			</label>
-			<input
-				id="custom-product-price"
-				class="form-control text-end fs-5"
-				type="text"
-				inputmode="decimal"
-				value={priceInput}
-				placeholder="0,00"
-				oninput={handlePriceInput}
-			/>
-		</div>
-
-		<div class="mb-3">
-			<Numpad onKeyPress={handleNumpadKey} />
-		</div>
+		<AmountField
+			id="custom-product-price"
+			label={$t('sales.customProductPrice')}
+			value={priceInput}
+			placeholder="0,00"
+			onValueChange={(v) => (priceInput = v)}
+		/>
 
 		<div class="d-flex gap-2">
 			<button class="btn btn-secondary flex-fill fw-semibold" onclick={onCancel}>

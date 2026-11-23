@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { CartItem } from '#lib/types.ts';
+	import { cartMinimumTotal, cartTotal, hasOpenPriceItems } from '#lib/cart/index.ts';
+	import { canEditCartUnitPrice, isOpenPriceForTotal } from '#lib/catalog/index.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
-	import { canEditCartUnitPrice, isOpenPriceForTotal } from '#lib/utils/product.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import { orderWeightEnabled } from '#lib/stores/app-config.ts';
 	import PriceEditModal from './PriceEditModal.svelte';
@@ -38,19 +39,11 @@
 	let commentEditProductId = $state<string | null>(null);
 	let totalEditOpen = $state(false);
 
-	let total = $derived(items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0));
-	/**
-	 * Total if every open-price catalog unit were reduced to 0.
-	 * Custom on-the-fly items keep their current price in this floor.
-	 */
-	let minimumTotal = $derived(
-		items.reduce(
-			(sum, i) => (isOpenPriceForTotal(i.product) ? sum : sum + i.unitPrice * i.quantity),
-			0
-		)
-	);
+	let total = $derived(cartTotal(items));
+	/** Floor when open-price lines are zeroed; custom lines keep their amount. */
+	let minimumTotal = $derived(cartMinimumTotal(items));
 	let isEmpty = $derived(items.length === 0);
-	let hasOpenPrice = $derived(items.some((i) => isOpenPriceForTotal(i.product)));
+	let hasOpenPrice = $derived(hasOpenPriceItems(items));
 
 	let priceEditItem = $derived(
 		priceEditProductId ? (items.find((i) => i.product.id === priceEditProductId) ?? null) : null

@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { formatCentsToInput, parseEurosToCents } from '#lib/money/index.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
 	import { isBackdropClick } from '#lib/utils/modal.ts';
 	import { t } from '#lib/i18n/index.ts';
-	import Numpad from './Numpad.svelte';
+	import AmountField from './AmountField.svelte';
 
 	interface Props {
 		title?: string;
@@ -31,84 +32,16 @@
 		onCancel
 	}: Props = $props();
 
-	let amount = $state(
-		untrack(() => (initialCents / 100).toFixed(2).replace('.', ','))
-	);
+	let amount = $state(untrack(() => formatCentsToInput(initialCents)));
+
+	let amountCents = $derived(parseEurosToCents(amount));
+	let belowMinimum = $derived(minimumCents != null && amountCents < minimumCents);
+	let canConfirm = $derived(!belowMinimum);
 
 	function handleOverlayClick(event: MouseEvent) {
 		if (isBackdropClick(event)) {
 			onCancel();
 		}
-	}
-
-	let amountCents = $derived.by(() => {
-		if (amount.trim() === '') return 0;
-		const val = parseFloat(amount.replace(',', '.'));
-		return isNaN(val) ? 0 : Math.round(val * 100);
-	});
-
-	let belowMinimum = $derived(minimumCents != null && amountCents < minimumCents);
-
-	let canConfirm = $derived(!belowMinimum);
-
-	function sanitizeAmountInput(raw: string): string {
-		const pattern = allowNegative ? /[^\d,.\-]/g : /[^\d,.]/g;
-		let value = raw.replace(pattern, '');
-		if (allowNegative) {
-			const negative = value.startsWith('-');
-			value = value.replace(/-/g, '');
-			value = (negative ? '-' : '') + value;
-		}
-
-		const separatorMatch = value.match(/[,.]/);
-		if (!separatorMatch || separatorMatch.index === undefined) {
-			return value;
-		}
-
-		const sep = separatorMatch[0];
-		const idx = separatorMatch.index;
-		const intPart = value.slice(0, idx).replace(/[,.]/g, '');
-		const fracPart = value.slice(idx + 1).replace(/[,.]/g, '');
-		return `${intPart}${sep}${fracPart}`;
-	}
-
-	function handleInput(event: Event) {
-		const input = event.currentTarget as HTMLInputElement;
-		amount = sanitizeAmountInput(input.value);
-		input.value = amount;
-	}
-
-	function handleInputFocus(event: Event) {
-		const input = event.currentTarget as HTMLInputElement;
-		const hasFocus = document.activeElement === event.currentTarget;
-		console.info('hasFocus', hasFocus);
-		// Using timeout so that all input is selected at first
-		setTimeout(() => input.select(), 1);
-	}
-
-	function handleNumpadKey(key: string) {
-		if (key === 'backspace') {
-			amount = amount.slice(0, -1);
-		} else if (key === '-') {
-			if (!allowNegative) {
-				return;
-			}
-			if (amount.startsWith('-')) {
-				amount = amount.slice(1);
-			} else {
-				amount = '-' + amount;
-			}
-		} else if (key.startsWith(',')) {
-			if (!amount.includes(',') && !amount.includes('.')) {
-				amount += ',';
-			}
-			if (key.length > 1) {
-				amount = amount.replace(/[,.].*$/i, key);
-			}
-		} else {
-			amount += key;
-		}
-		amount = sanitizeAmountInput(amount);
 	}
 
 	function handleConfirm() {
@@ -135,9 +68,18 @@
 			<p class="text-muted small mb-3">{subtitle}</p>
 		{/if}
 
-		<label class="d-flex flex-column gap-1 fw-semibold mb-3" style="font-size: 0.95rem">
-			<span class="d-flex flex-wrap align-items-baseline gap-2">
-				<span>{label ?? $t('order.editPriceLabel')}</span>
+		<AmountField
+			id="price-edit-amount"
+			label={label ?? $t('order.editPriceLabel')}
+			value={amount}
+			invalid={belowMinimum}
+			{allowNegative}
+			hint={belowMinimum && minimumCents != null
+				? $t('order.totalBelowMinimum', { minimum: formatPrice(minimumCents) })
+				: undefined}
+			onValueChange={(v) => (amount = v)}
+		>
+			{#snippet labelExtra()}
 				{#if originalCents != null}
 					<span class="small fw-normal text-muted">
 						{$t('order.originalTotal')}: {formatPrice(originalCents)}
@@ -148,24 +90,8 @@
 						{$t('order.minimumTotal')}: {formatPrice(minimumCents)}
 					</span>
 				{/if}
-			</span>
-			<input
-				class="form-control text-end fs-5"
-				class:is-invalid={belowMinimum}
-				type="text"
-				inputmode="decimal"
-				value={amount}
-				oninput={handleInput}
-				onfocus={handleInputFocus}
-			/>
-			{#if belowMinimum && minimumCents != null}
-				<span class="small text-danger fw-normal">
-					{$t('order.totalBelowMinimum', { minimum: formatPrice(minimumCents) })}
-				</span>
-			{/if}
-		</label>
-
-		<Numpad onKeyPress={handleNumpadKey} />
+			{/snippet}
+		</AmountField>
 
 		<div class="d-flex gap-2 mt-3">
 			<button class="btn btn-secondary flex-fill fw-semibold" onclick={onCancel}>

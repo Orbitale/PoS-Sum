@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api_call } from '#lib/api.ts';
+	import { buildDashboardCsv } from '#lib/csv/index.ts';
 	import { downloadCsv } from '#lib/export-csv.ts';
 	import type { DashboardSummary } from '#lib/types.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
@@ -20,79 +21,21 @@
 		}
 	});
 
-	function centsToEuros(cents: number): string {
-		return (cents / 100).toFixed(2);
-	}
-
-	function q(value: string): string {
-		return `"${value.replace(/"/g, '""')}"`;
-	}
-
 	async function exportCsv() {
 		if (!summary) {
 			return;
 		}
 
-		const lines: string[] = [];
-
-		// Sales by product table
-		lines.push(
-			[
-				q($t('dashboard.colProduct')),
-				q($t('dashboard.colUnitPrice')),
-				q($t('dashboard.colQuantity')),
-				q($t('dashboard.colTotal'))
-			].join(';')
-		);
-		for (const row of summary.per_product) {
-			const unitPrice = centsToEuros(Math.round(row.total_revenue / row.total_quantity));
-			lines.push(
-				[
-					q(row.product_name),
-					q(unitPrice),
-					q(String(row.total_quantity)),
-					q(centsToEuros(row.total_revenue))
-				].join(';')
-			);
-		}
-		lines.push(
-			[
-				q($t('dashboard.productTableTotal')),
-				q(''),
-				q(''),
-				q(centsToEuros(summary.total_revenue))
-			].join(';')
-		);
-
-		// Blank separator line
-		lines.push('');
-
-		// Payment method breakdown table
-		lines.push(
-			[
-				q($t('dashboard.colPaymentMethod')),
-				q($t('dashboard.colRevenue')),
-				q($t('dashboard.colTransactions'))
-			].join(';')
-		);
-		for (const row of summary.per_payment_method) {
-			lines.push(
-				[
-					q(row.payment_method),
-					q(centsToEuros(row.total_revenue)),
-					q(String(row.transaction_count))
-				].join(';')
-			);
-		}
-		lines.push(
-			[
-				q($t('dashboard.colTotal')),
-				q(centsToEuros(summary.total_revenue)),
-				q(String(summary.total_transactions))
-			].join(';')
-		);
-
-		const csv = lines.join('\n');
+		const csv = buildDashboardCsv(summary, {
+			colProduct: $t('dashboard.colProduct'),
+			colUnitPrice: $t('dashboard.colUnitPrice'),
+			colQuantity: $t('dashboard.colQuantity'),
+			colTotal: $t('dashboard.colTotal'),
+			productTableTotal: $t('dashboard.productTableTotal'),
+			colPaymentMethod: $t('dashboard.colPaymentMethod'),
+			colRevenue: $t('dashboard.colRevenue'),
+			colTransactions: $t('dashboard.colTransactions')
+		});
 
 		await downloadCsv('tableau-de-bord.csv', csv);
 	}

@@ -20,3 +20,15 @@ export function canEditCartUnitPrice(
 ): boolean {
 	return !product.fixed_price || isCustomProduct(product);
 }
+
+export function createCustomProduct(name: string, priceCents: number): Product {
+	return {
+		id: crypto.randomUUID(),
+		name,
+		price: priceCents,
+		category_id: CUSTOM_PRODUCT_CATEGORY_ID,
+		available: true,
+		// Editable in the cart via canEditCartUnitPrice; excluded from total cuts.
+		fixed_price: true
+	};
+}

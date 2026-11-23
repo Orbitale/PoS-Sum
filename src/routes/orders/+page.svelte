@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api_call } from '#lib/api.ts';
+	import { buildOrdersCsv } from '#lib/csv/index.ts';
 	import { downloadCsv } from '#lib/export-csv.ts';
 	import type { OrderWithItems } from '#lib/types.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
@@ -43,74 +44,17 @@
 		);
 	}
 
-	function centsToEuros(cents: number): string {
-		return (cents / 100).toFixed(2);
-	}
-
-	function q(value: string): string {
-		return `"${value.replace(/"/g, '""')}"`;
-	}
-
 	async function exportCsv() {
-		// Collect all unique product names from order items, in first-seen order
-		const productNames: string[] = [];
-		const seen = new Set<string>();
-		for (const order of orders) {
-			for (const item of order.items) {
-				if (!seen.has(item.product_name)) {
-					seen.add(item.product_name);
-					productNames.push(item.product_name);
-				}
-			}
-		}
-
-		// Build header
-		const header = [
-			q($t('orders.csvColId')),
-			q($t('orders.csvColDate')),
-			q($t('orders.csvColTotal')),
-			q($t('orders.csvColPaymentMethod')),
-			q($t('orders.csvColWeight'))
-		];
-		for (const name of productNames) {
-			header.push(q(`${name} (${$t('orders.colUnitPrice')})`));
-			header.push(q(`${name} (${$t('orders.colQty')})`));
-			header.push(q(`${name} (${$t('orders.colSubtotal')})`));
-		}
-
-		const lines: string[] = [header.join(';')];
-
-		// Build one line per order
-		for (const order of orders) {
-			const itemsByProduct = new Map<string, (typeof order.items)[number]>();
-			for (const item of order.items) {
-				itemsByProduct.set(item.product_name, item);
-			}
-
-			const row = [
-				q(order.id),
-				q(order.created_at),
-				q(centsToEuros(order.total)),
-				q(order.payment_method),
-				q(order.weight != null ? String(order.weight) : '')
-			];
-			for (const name of productNames) {
-				const item = itemsByProduct.get(name);
-				if (item) {
-					row.push(q(centsToEuros(item.unit_price)));
-					row.push(q(String(item.quantity)));
-					row.push(q(centsToEuros(item.total)));
-				} else {
-					row.push(q(''));
-					row.push(q(''));
-					row.push(q(''));
-				}
-			}
-			lines.push(row.join(';'));
-		}
-
-		const csv = lines.join('\n');
-
+		const csv = buildOrdersCsv(orders, {
+			colId: $t('orders.csvColId'),
+			colDate: $t('orders.csvColDate'),
+			colTotal: $t('orders.csvColTotal'),
+			colPaymentMethod: $t('orders.csvColPaymentMethod'),
+			colWeight: $t('orders.csvColWeight'),
+			colUnitPrice: $t('orders.colUnitPrice'),
+			colQty: $t('orders.colQty'),
+			colSubtotal: $t('orders.colSubtotal')
+		});
 		await downloadCsv('commandes.csv', csv);
 	}
 </script>

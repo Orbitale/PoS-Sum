@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { sanitizeCategoryId } from '#lib/catalog/index.ts';
 	import type { Category } from '#lib/types.ts';
 	import { isBackdropClick } from '#lib/utils/modal.ts';
 	import { t } from '#lib/i18n/index.ts';
@@ -25,16 +26,9 @@
 		}
 	}
 
-	function sanitizeId(value: string): string {
-		return value
-			.toLowerCase()
-			.replace(/[^a-z0-9._-]/g, '')
-			.replace(/[._-]{2,}/g, (m) => m[0]);
-	}
-
 	function handleIdInput(e: Event) {
 		const input = e.target as HTMLInputElement;
-		id = sanitizeId(input.value);
+		id = sanitizeCategoryId(input.value);
 		input.value = id;
 	}
 
