@@ -10,17 +10,17 @@
 
 	let { productName, initialComment, onConfirm, onCancel }: Props = $props();
 
+	// Capture the value when the modal is opened (component is remounted each time).
+
 	let comment = $state(initialComment);
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
 	style="z-index: 1300; background: rgba(0,0,0,0.5);"
 	onclick={onCancel}
 	onkeydown={(e) => e.key === 'Escape' && onCancel()}
 >
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="bg-body rounded-4 p-4"
 		style="width: min(420px, 95vw);"

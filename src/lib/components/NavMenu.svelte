@@ -3,7 +3,7 @@
 	import { t } from '#lib/i18n/index.ts';
 	import { shopName, theme, setConfigValue } from '#lib/stores/app-config.ts';
 
-	const links: Array<{ href: null | string; labelKey?: null | string }> = [
+	const links: Array<{ href: string; labelKey: string }> = [
 		{ href: '/', labelKey: 'nav.sales' },
 		{ href: '/dashboard', labelKey: 'nav.dashboard' },
 		{ href: '/products', labelKey: 'nav.products' },

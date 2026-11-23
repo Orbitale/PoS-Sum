@@ -43,14 +43,12 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
 	style="z-index: 100; background: rgba(0,0,0,0.5);"
 	onclick={onCancel}
 	onkeydown={(e) => e.key === 'Escape' && onCancel()}
 >
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="modal-box bg-body rounded-4 p-4 overflow-auto"
 		style="width: 90%; max-width: 420px; max-height: 90vh;"
