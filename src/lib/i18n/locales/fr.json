@@ -21,7 +21,7 @@
 		"clear": "Effacer",
 		"checkout": "Encaisser",
 		"recommendedPriceTooltip": "Ce prix n'est qu'une recommandation.",
-		"recommendedTotalTooltip": "Le total peut être ajusté car cette commande contient un prix recommandé.",
+		"recommendedTotalTooltip": "Le total peut être ajusté car cette commande contient au moins un prix libre.",
 		"editPrice": "Modifier le prix",
 		"editPriceTitle": "Modifier le prix unitaire",
 		"editPriceLabel": "Prix unitaire",

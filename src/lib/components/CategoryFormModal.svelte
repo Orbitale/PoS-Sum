@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { Category } from '#lib/types.ts';
+	import { isBackdropClick } from '#lib/utils/modal.ts';
 	import { t } from '#lib/i18n/index.ts';
 
 	interface Props {
@@ -10,12 +12,18 @@
 
 	let { category, onSave, onCancel }: Props = $props();
 
-	let id = $derived(category?.id ?? '');
-	let label = $derived(category?.label ?? '');
-	let color = $derived(category?.color ?? '#6b7280');
+	let id = $state(untrack(() => category?.id ?? ''));
+	let label = $state(untrack(() => category?.label ?? ''));
+	let color = $state(untrack(() => category?.color ?? '#6b7280'));
 	let isSubmitting = $state(false);
 
 	let isEditing = $derived(category !== null);
+
+	function handleOverlayClick(event: MouseEvent) {
+		if (isBackdropClick(event)) {
+			onCancel();
+		}
+	}
 
 	function sanitizeId(value: string): string {
 		return value
@@ -46,13 +54,15 @@
 <div
 	class="modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
 	style="z-index: 100; background: rgba(0,0,0,0.5);"
-	onclick={onCancel}
+	role="dialog"
+	aria-modal="true"
+	tabindex="-1"
+	onclick={handleOverlayClick}
 	onkeydown={(e) => e.key === 'Escape' && onCancel()}
 >
 	<div
 		class="modal-box bg-body rounded-4 p-4 overflow-auto"
 		style="width: 90%; max-width: 420px; max-height: 90vh;"
-		onclick={(e) => e.stopPropagation()}
 	>
 		<h2 class="h5 mb-3">
 			{isEditing ? $t('categoryForm.editTitle') : $t('categoryForm.newTitle')}

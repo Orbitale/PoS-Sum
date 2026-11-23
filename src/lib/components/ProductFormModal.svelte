@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { Product, Category } from '#lib/types.ts';
+	import { isBackdropClick } from '#lib/utils/modal.ts';
 	import { t } from '#lib/i18n/index.ts';
 
 	interface Props {
@@ -17,18 +19,22 @@
 
 	let { product, categories, onSave, onCancel }: Props = $props();
 
-	// Capture initial form values when the modal is opened (remounted each time).
-
-	let name = $state(product?.name ?? '');
-
-	let priceInput = $state(product ? (product.price / 100).toFixed(2).replace('.', ',') : '');
-
-	let category_id = $state(product?.category_id ?? categories[0]?.id ?? '');
-
-	let available = $state(product?.available ?? true);
-
-	let fixed_price = $state(product?.fixed_price ?? true);
+	let name = $state(untrack(() => product?.name ?? ''));
+	let priceInput = $state(
+		untrack(() => (product ? (product.price / 100).toFixed(2).replace('.', ',') : ''))
+	);
+	let category_id = $state(
+		untrack(() => product?.category_id ?? categories[0]?.id ?? '')
+	);
+	let available = $state(untrack(() => product?.available ?? true));
+	let fixed_price = $state(untrack(() => product?.fixed_price ?? true));
 	let isSubmitting = $state(false);
+
+	function handleOverlayClick(event: MouseEvent) {
+		if (isBackdropClick(event)) {
+			onCancel();
+		}
+	}
 
 	let priceCents = $derived.by(() => {
 		const val = parseFloat(priceInput.replace(',', '.'));
@@ -57,13 +63,15 @@
 <div
 	class="modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
 	style="z-index: 100; background: rgba(0,0,0,0.5);"
-	onclick={onCancel}
+	role="dialog"
+	aria-modal="true"
+	tabindex="-1"
+	onclick={handleOverlayClick}
 	onkeydown={(e) => e.key === 'Escape' && onCancel()}
 >
 	<div
 		class="modal-box bg-body rounded-4 p-4 overflow-auto"
 		style="width: 90%; max-width: 420px; max-height: 90vh;"
-		onclick={(e) => e.stopPropagation()}
 	>
 		<h2 class="h5 mb-3">{product ? $t('productForm.editTitle') : $t('productForm.newTitle')}</h2>
 

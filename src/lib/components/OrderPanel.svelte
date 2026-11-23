@@ -121,7 +121,7 @@
 						<td class="col-sm-3">
 							<button
 								type="button"
-								class="btn btn-secondary p-2 text-decoration-none"
+								class="btn btn-secondary text-decoration-none"
 								title={$t('order.addComment')}
 								aria-label={$t('order.addComment')}
 								onclick={() => (commentEditProductId = item.product.id)}
@@ -188,24 +188,19 @@
 				/>
 			</label>
 		{/if}
-		<div class="d-flex justify-content-between align-items-center fs-5 fw-bold mb-2 gap-2">
-			<span>{$t('order.total')}</span>
-			<span class="d-flex align-items-center gap-1">
+		<div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+			<span>
+			  <span class="fs-5 fw-bold">{$t('order.total')}</span>
 				{#if hasOpenPrice}
-					<span
-						class="small fw-normal"
-						role="button"
-						tabindex="0"
-						data-bs-toggle="tooltip"
-						data-bs-trigger="hover focus click"
-						data-bs-title={$t('order.recommendedTotalTooltip')}
-						aria-label={$t('order.recommendedTotalTooltip')}
-					>
-						💬
-					</span>
+					<small class="fs-6 text-sm text-body-secondary fst-italic">({$t('order.recommendedTotalTooltip')})</small>
+				{/if}
+			</span>
+			<span class="d-flex align-items-center gap-1">
+				<span>{formatPrice(total)}</span>
+				{#if hasOpenPrice}
 					<button
 						type="button"
-						class="btn btn-link btn-sm p-0 text-decoration-none"
+						class="btn btn-secondary btn-sm text-decoration-none"
 						title={$t('order.editTotal')}
 						aria-label={$t('order.editTotal')}
 						onclick={() => (totalEditOpen = true)}
@@ -213,7 +208,6 @@
 						✏️
 					</button>
 				{/if}
-				<span>{formatPrice(total)}</span>
 			</span>
 		</div>
 		<div class="d-flex gap-2">
