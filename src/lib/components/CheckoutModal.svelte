@@ -98,8 +98,8 @@
 				</div>
 			</div>
 
-			<div class="checkout-actions">
-				<div class="d-flex gap-2 mb-2 flex-wrap">
+			<div class="checkout-actions d-flex gap-2 flex-wrap align-items-stretch">
+				<div class="d-flex gap-2 flex-grow-1 flex-wrap">
 					<button
 						class="btn flex-fill fw-semibold {paymentMethod === 'cash'
 							? 'btn-primary'
@@ -128,9 +128,10 @@
 						🧾 {$t('checkout.check')}
 					</button>
 				</div>
-				<div class="d-flex gap-2">
+				<div class="d-flex gap-2 flex-grow-1">
 					<button
 						class="btn btn-success flex-fill fw-semibold"
+						style="min-height: 48px;"
 						onclick={handleConfirm}
 						disabled={!canConfirm}
 					>
@@ -138,6 +139,7 @@
 					</button>
 					<button
 						class="btn btn-danger flex-fill fw-semibold"
+						style="min-height: 48px;"
 						onclick={onCancel}
 						disabled={isSubmitting}
 					>
