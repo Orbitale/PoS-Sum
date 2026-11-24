@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke, isTauri } from '@tauri-apps/api/core';
 import { invoke as invokeBrowser } from '#lib/backend-browser/index.ts';
 
 vi.mock('@tauri-apps/api/core', () => ({
-	invoke: vi.fn()
+	invoke: vi.fn(),
+	isTauri: vi.fn()
 }));
 
 vi.mock('#lib/backend-browser/index.ts', () => ({
@@ -15,6 +16,7 @@ import { api_call } from './api.ts';
 describe('api_call', () => {
 	beforeEach(() => {
 		vi.mocked(invoke).mockReset();
+		vi.mocked(isTauri).mockReset().mockReturnValue(true);
 		vi.mocked(invokeBrowser).mockReset();
 	});
 
@@ -29,6 +31,14 @@ describe('api_call', () => {
 	it('propagates invoke failures', async () => {
 		vi.mocked(invoke).mockRejectedValueOnce(new Error('backend down'));
 		await expect(api_call('list_orders', {}, 'tauri')).rejects.toThrow('backend down');
+	});
+
+	it('rejects the tauri target outside of the Tauri app', async () => {
+		vi.mocked(isTauri).mockReturnValue(false);
+		await expect(api_call('list_products', {}, 'tauri')).rejects.toThrow(
+			'Wrong backend configured'
+		);
+		expect(invoke).not.toHaveBeenCalled();
 	});
 
 	it('forwards static commands to the browser backend', async () => {
