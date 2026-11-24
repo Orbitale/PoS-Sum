@@ -195,6 +195,7 @@
 	},
 	"configuration": {
 		"title": "Configuration",
+		"loadError": "Échec du chargement de la configuration : {error}",
 		"shopName": "Nom de la boutique",
 		"shopNamePlaceholder": "Affiché dans la barre de navigation",
 		"save": "Enregistrer",

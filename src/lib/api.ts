@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { invoke, isTauri } from '@tauri-apps/api/core';
 
 export type AppTarget = 'tauri' | 'web' | 'static';
 
@@ -12,6 +12,11 @@ export async function api_call<T = void>(
 ): Promise<T> {
 	switch (target) {
 		case 'tauri':
+			if (!isTauri()) {
+				throw new Error(
+					'Wrong backend configured. App is running in browser, but is configured for desktop or mobile app.'
+				);
+			}
 			return invoke<T>(command, params);
 		case 'web':
 			throw new Error('Web backend not yet implemented');

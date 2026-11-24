@@ -31,14 +31,19 @@
 		categories.length > 0 && categories.every((c) => $groupedCategories.has(c.id))
 	);
 	let someGrouped = $derived(categories.some((c) => $groupedCategories.has(c.id)));
+	let error = $state<string | null>(null);
 
 	onMount(async () => {
 		shopNameInput = $shopName;
-		[dbPath, appVersion, categories] = await Promise.all([
-			api_call<string>('get_db_path'),
-			api_call<AppVersion>('get_app_version'),
-			api_call<Category[]>('list_categories')
-		]);
+		try {
+			[dbPath, appVersion, categories] = await Promise.all([
+				api_call<string>('get_db_path'),
+				api_call<AppVersion>('get_app_version'),
+				api_call<Category[]>('list_categories')
+			]);
+		} catch (e) {
+			error = $t('configuration.loadError', { error: String(e) });
+		}
 	});
 
 	async function saveShopName() {
@@ -113,6 +118,12 @@
 	<div class="pt-4 pb-3">
 		<h1 class="h4 m-0 fw-semibold">{$t('configuration.title')}</h1>
 	</div>
+
+	{#if error}
+		<div class="d-flex align-items-center justify-content-center text-danger fs-5 flex-grow-1">
+			{error}
+		</div>
+	{/if}
 
 	<section class="mb-4 pb-3 border-bottom">
 		<h2 class="h6 fw-semibold mb-2">{$t('configuration.shopName')}</h2>

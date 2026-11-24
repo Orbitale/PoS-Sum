@@ -195,6 +195,7 @@
 	},
 	"configuration": {
 		"title": "Configuration",
+		"loadError": "Failed to load configuration: {error}",
 		"shopName": "Shop name",
 		"shopNamePlaceholder": "Displayed in the navigation bar",
 		"save": "Save",
