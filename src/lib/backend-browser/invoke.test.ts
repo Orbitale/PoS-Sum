@@ -10,7 +10,7 @@ import type {
 	PaymentMethod,
 	Product
 } from '#lib/types.ts';
-import { closeDatabase, withTransaction } from './db.ts';
+import { STORE_NAMES, closeDatabase, databaseNames, promisify, withTransaction } from './db.ts';
 import { invoke } from './invoke.ts';
 
 beforeEach(async () => {
@@ -412,6 +412,154 @@ describe('datasets and resets', () => {
 		const entries = await invoke<ConfigurationEntry[]>('list_configuration');
 		expect(entries).toHaveLength(5);
 		expect(entries.find((entry) => entry.id === 'shop_name')?.value).toBe('');
+	});
+});
+
+describe('database saves', () => {
+	async function productNames(): Promise<string[]> {
+		const products = await invoke<Product[]>('list_products');
+		return products.map((product) => product.name);
+	}
+
+	async function savedProductNames(fileName: string): Promise<string[]> {
+		const db = await promisify(indexedDB.open(fileName));
+		const products: Product[] = await promisify(
+			db.transaction('products').objectStore('products').getAll()
+		);
+		db.close();
+		return products.map((product) => product.name);
+	}
+
+	function saveAt(date: Date, label = ''): Promise<string> {
+		vi.setSystemTime(date);
+		return invoke<string>('create_database_save', { label });
+	}
+
+	async function createForeignDatabase(
+		name: string,
+		version: number,
+		upgrade: (tx: IDBTransaction) => void = () => {}
+	): Promise<void> {
+		const request = indexedDB.open(name, version);
+		request.onupgradeneeded = () => upgrade(request.transaction as IDBTransaction);
+		(await promisify(request)).close();
+	}
+
+	function createStores(tx: IDBTransaction): void {
+		for (const storeName of STORE_NAMES) {
+			tx.db.createObjectStore(storeName);
+		}
+	}
+
+	it('names the saves after the local date and the label', async () => {
+		await expect(saveAt(new Date(2026, 10, 24, 9, 5, 3))).resolves.toBe(
+			'pos_sum_2026-11-24_09_05_03.db'
+		);
+		await expect(saveAt(new Date(2026, 10, 24, 9, 5, 3), 'end-of-day-2')).resolves.toBe(
+			'pos_sum_2026-11-24_09_05_03_end-of-day-2.db'
+		);
+	});
+
+	it('rejects labels that are not urlized', async () => {
+		for (const label of ['../escape', 'a/b', 'a\\b', 'End', 'a b', 'a--b', '-a', 'a-', 'journée']) {
+			await expect(invoke('create_database_save', { label })).rejects.toThrow(
+				`Invalid save name: ${label}`
+			);
+		}
+		await expect(invoke('list_database_saves')).resolves.toEqual([]);
+	});
+
+	it('lists the saves alphabetically, ignoring the other databases', async () => {
+		await saveAt(new Date(2026, 10, 24, 14, 0, 0), 'z-last');
+		await saveAt(new Date(2026, 10, 23, 18, 30, 0));
+		await saveAt(new Date(2026, 10, 24, 14, 0, 0), 'a-first');
+		await createForeignDatabase('other.db', 1);
+		await createForeignDatabase('pos_sum_notes', 1);
+
+		await expect(invoke('list_database_saves')).resolves.toEqual([
+			'pos_sum_2026-11-23_18_30_00.db',
+			'pos_sum_2026-11-24_14_00_00_a-first.db',
+			'pos_sum_2026-11-24_14_00_00_z-last.db'
+		]);
+	});
+
+	it('copies the current database', async () => {
+		await makeProduct('Cola', 150, 'drinks');
+		const fileName = await invoke<string>('create_database_save', { label: 'cola' });
+		await makeProduct('Water', 100, 'drinks');
+
+		expect(await savedProductNames(fileName)).toEqual(['Cola']);
+	});
+
+	it('never overwrites a save', async () => {
+		await makeProduct('Cola', 150, 'drinks');
+		const fileName = await saveAt(new Date(2026, 10, 24, 14, 29, 3));
+		await makeProduct('Water', 100, 'drinks');
+
+		await expect(saveAt(new Date(2026, 10, 24, 14, 29, 3))).rejects.toThrow(
+			'Failed to save database: output file already exists'
+		);
+		expect(await savedProductNames(fileName)).toEqual(['Cola']);
+	});
+
+	it('replaces the current database with a save, which stays untouched', async () => {
+		await invoke('update_configuration', { payload: { id: 'shop_name', value: 'Saved shop' } });
+		const cola = await makeProduct('Cola', 150, 'drinks');
+		vi.setSystemTime(new Date('2026-06-01T10:00:00Z'));
+		await createOrder([line(cola, 1)]);
+		await createOrder([line(cola, 2)]);
+		const orders = await invoke<OrderWithItems[]>('list_orders');
+		const fileName = await invoke<string>('create_database_save', { label: '' });
+		await invoke('reset_database');
+		await makeProduct('Water', 100, 'drinks');
+
+		await invoke('restore_database_save', { fileName });
+
+		expect(await productNames()).toEqual(['Cola']);
+		await expect(invoke('list_orders')).resolves.toEqual(orders);
+		const entries = await invoke<ConfigurationEntry[]>('list_configuration');
+		expect(entries.find((entry) => entry.id === 'shop_name')?.value).toBe('Saved shop');
+		expect(await savedProductNames(fileName)).toEqual(['Cola']);
+	});
+
+	it('only restores saves', async () => {
+		await makeProduct('Cola', 150, 'drinks');
+		await createForeignDatabase('other.db', 1, createStores);
+
+		for (const fileName of ['pos_sum', 'pos_sum_missing.db', 'other.db']) {
+			await expect(invoke('restore_database_save', { fileName })).rejects.toThrow(
+				`Save not found: ${fileName}`
+			);
+		}
+		expect(await productNames()).toEqual(['Cola']);
+		expect(await databaseNames()).not.toContain('pos_sum_missing.db');
+	});
+
+	it('rejects databases that are not PoS-Sum saves', async () => {
+		await makeProduct('Cola', 150, 'drinks');
+		await createForeignDatabase('pos_sum_empty.db', 1);
+		await createForeignDatabase('pos_sum_newer.db', 1000, createStores);
+
+		for (const fileName of ['pos_sum_empty.db', 'pos_sum_newer.db']) {
+			await expect(invoke('restore_database_save', { fileName })).rejects.toThrow(
+				'Invalid save: the file is corrupted or is not a PoS-Sum database'
+			);
+		}
+		expect(await productNames()).toEqual(['Cola']);
+	});
+
+	it('keeps the current database when a save fails to be restored', async () => {
+		await makeProduct('Cola', 150, 'drinks');
+		await createForeignDatabase('pos_sum_broken.db', 1, (tx) => {
+			createStores(tx);
+			tx.objectStore('products').add({ name: 'Without id' }, 'p1');
+		});
+
+		await expect(
+			invoke('restore_database_save', { fileName: 'pos_sum_broken.db' })
+		).rejects.toMatchObject({ name: 'DataError' });
+		expect(await productNames()).toEqual(['Cola']);
+		await expect(invoke('list_categories')).resolves.toHaveLength(1);
 	});
 });
 

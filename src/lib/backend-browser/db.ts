@@ -107,3 +107,87 @@ export function getAll<T>(storeName: StoreName): Promise<T[]> {
 export async function exists(store: IDBObjectStore, key: IDBValidKey): Promise<boolean> {
 	return (await promisify(store.count(key))) > 0;
 }
+
+/** The records of every store, with their keys: the ones of the orders keep them in insertion order. */
+type Snapshot = { storeName: StoreName; keys: IDBValidKey[]; values: unknown[] }[];
+
+function readSnapshot(tx: IDBTransaction): Promise<Snapshot> {
+	return Promise.all(
+		STORE_NAMES.map(async (storeName) => {
+			const store = tx.objectStore(storeName);
+			const [keys, values] = await Promise.all([
+				promisify(store.getAllKeys()),
+				promisify(store.getAll())
+			]);
+			return { storeName, keys, values };
+		})
+	);
+}
+
+function writeSnapshot(tx: IDBTransaction, snapshot: Snapshot): void {
+	for (const { storeName, keys, values } of snapshot) {
+		const store = tx.objectStore(storeName);
+		store.clear();
+		values.forEach((value, index) => {
+			if (store.keyPath === null) {
+				store.put(value, keys[index]);
+			} else {
+				store.put(value);
+			}
+		});
+	}
+}
+
+export async function databaseNames(): Promise<string[]> {
+	const databases = await indexedDB.databases();
+	return databases.flatMap((database) => database.name ?? []);
+}
+
+/**
+ * Creates the database `name` with the schema and the records of the main database, written by the
+ * transaction that creates it so that a failure leaves nothing behind. Returns `false` without
+ * touching anything when the name is already taken.
+ */
+export async function copyDatabase(name: string): Promise<boolean> {
+	if ((await databaseNames()).includes(name)) {
+		return false;
+	}
+	const snapshot = await withTransaction([...STORE_NAMES], 'readonly', readSnapshot);
+	const request = indexedDB.open(name, migrations.length);
+	request.onupgradeneeded = () => {
+		for (const migrate of migrations) {
+			migrate(request.result);
+		}
+		writeSnapshot(request.transaction as IDBTransaction, snapshot);
+	};
+	(await promisify(request)).close();
+	return true;
+}
+
+/**
+ * Replaces the records of the main database with the ones of the database `name`, which is only
+ * read. Returns `false` when it doesn't have the schema of the main database.
+ */
+export async function restoreDatabase(name: string): Promise<boolean> {
+	const snapshot = await readDatabase(name);
+	if (!snapshot) {
+		return false;
+	}
+	await withTransaction([...STORE_NAMES], 'readwrite', (tx) => writeSnapshot(tx, snapshot));
+	return true;
+}
+
+async function readDatabase(name: string): Promise<Snapshot | null> {
+	// Without a version, an existing database opens as is, while a missing one would be created.
+	const request = indexedDB.open(name);
+	request.onupgradeneeded = () => request.transaction?.abort();
+	const db = await promisify(request);
+	try {
+		const hasSchema =
+			db.version <= migrations.length &&
+			STORE_NAMES.every((storeName) => db.objectStoreNames.contains(storeName));
+		return hasSchema ? await readSnapshot(db.transaction([...STORE_NAMES], 'readonly')) : null;
+	} finally {
+		db.close();
+	}
+}

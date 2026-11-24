@@ -2,6 +2,7 @@ import type { Category, PaymentMethod } from '#lib/types.ts';
 import { Args } from './args.ts';
 import {
 	createCategory,
+	createDatabaseSave,
 	createOrder,
 	createProduct,
 	deleteCategory,
@@ -11,11 +12,13 @@ import {
 	getDbPath,
 	listCategories,
 	listConfiguration,
+	listDatabaseSaves,
 	listOrders,
 	listProducts,
 	loadDefaultDataset,
 	resetDatabase,
 	resetSales,
+	restoreDatabaseSave,
 	toggleProductAvailability,
 	updateCategory,
 	updateConfiguration,
@@ -91,6 +94,9 @@ const commands: Record<string, (args: Args) => Promise<unknown>> = {
 	reset_database: resetDatabase,
 	reset_sales: resetSales,
 	get_db_path: getDbPath,
+	list_database_saves: listDatabaseSaves,
+	create_database_save: (args) => createDatabaseSave(args.string('label')),
+	restore_database_save: (args) => restoreDatabaseSave(args.string('fileName')),
 	get_app_version: getAppVersion
 };
 

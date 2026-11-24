@@ -33,6 +33,10 @@
 		categories.length > 0 && categories.every((c) => $groupedCategories.has(c.id))
 	);
 	let someGrouped = $derived(categories.some((c) => $groupedCategories.has(c.id)));
+	// Mobile systems keep the files of the app private: no file manager can open its directory.
+	let canOpenDatabaseDirectory = $derived(
+		APP_TARGET !== 'static' && appVersion !== null && !['android', 'ios'].includes(appVersion.os)
+	);
 	let error = $state<string | null>(null);
 
 	onMount(async () => {
@@ -219,7 +223,7 @@
 					>
 						{$t('saves.open')}
 					</button>
-					{#if APP_TARGET !== 'static'}
+					{#if canOpenDatabaseDirectory}
 						<button
 							class="btn btn-outline-primary btn-sm py-0 ms-1 fw-semibold"
 							onclick={openDatabaseDirectory}

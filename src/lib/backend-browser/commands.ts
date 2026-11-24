@@ -16,7 +16,17 @@ import type {
 	UpdateCategoryPayload,
 	UpdateProductPayload
 } from '#lib/types.ts';
-import { DB_NAME, STORE_NAMES, exists, getAll, promisify, withTransaction } from './db.ts';
+import {
+	DB_NAME,
+	STORE_NAMES,
+	copyDatabase,
+	databaseNames,
+	exists,
+	getAll,
+	promisify,
+	restoreDatabase,
+	withTransaction
+} from './db.ts';
 import { BackendError } from './errors.ts';
 import { CONFIGURATION_DEFAULTS, DATASETS } from './seed.ts';
 
@@ -302,6 +312,42 @@ export async function resetSales(): Promise<void> {
 
 export async function getDbPath(): Promise<string> {
 	return `indexeddb://${DB_NAME}`;
+}
+
+/** Same names as the saves of the Tauri app: the saves modal previews them. */
+function saveFileName(date: Date, label: string): string {
+	const pad = (value: number) => String(value).padStart(2, '0');
+	const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+	const time = [date.getHours(), date.getMinutes(), date.getSeconds()].map(pad).join('_');
+	if (label === '') {
+		return `pos_sum_${day}_${time}.db`;
+	}
+	if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(label)) {
+		throw new BackendError(`Invalid save name: ${label}`);
+	}
+	return `pos_sum_${day}_${time}_${label}.db`;
+}
+
+export async function listDatabaseSaves(): Promise<string[]> {
+	const names = await databaseNames();
+	return names.filter((name) => name.startsWith('pos_sum') && name.endsWith('.db')).sort(compare);
+}
+
+export async function createDatabaseSave(label: string): Promise<string> {
+	const fileName = saveFileName(new Date(), label);
+	if (!(await copyDatabase(fileName))) {
+		throw new BackendError('Failed to save database: output file already exists');
+	}
+	return fileName;
+}
+
+export async function restoreDatabaseSave(fileName: string): Promise<void> {
+	if (!(await listDatabaseSaves()).includes(fileName)) {
+		throw new BackendError(`Save not found: ${fileName}`);
+	}
+	if (!(await restoreDatabase(fileName))) {
+		throw new BackendError('Invalid save: the file is corrupted or is not a PoS-Sum database');
+	}
 }
 
 export async function getAppVersion(): Promise<AppVersion> {
