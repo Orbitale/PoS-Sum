@@ -10,10 +10,7 @@ export function cartTotal(items: CartItem[]): number {
 	return items.reduce((sum, item) => sum + lineTotal(item), 0);
 }
 
-/**
- * Floor for editable order totals: open-price catalog lines treated as 0;
- * fixed and custom lines keep their current amounts.
- */
+/** Lowest total the order can be edited down to: open-price lines count as 0. */
 export function cartMinimumTotal(items: CartItem[]): number {
 	return items.reduce(
 		(sum, item) => (isOpenPriceForTotal(item.product) ? sum : sum + lineTotal(item)),
@@ -73,124 +70,63 @@ export function setCartComment(
 }
 
 /**
- * Adjust open-price lines so the cart total matches `desiredTotalCents`.
- * The price cut/increase is shared equally across open-priced line totals.
- * Unit prices never go below 0. Custom and fixed lines are unchanged.
+ * Spreads the difference between the current and the desired total evenly over the open-price
+ * lines, without letting any price go below 0.
  */
 export function redistributeOpenPricesToTotal(
 	items: CartItem[],
 	desiredTotalCents: number
 ): CartItem[] {
-	const openIndices: number[] = [];
-	for (let i = 0; i < items.length; i++) {
-		if (isOpenPriceForTotal(items[i].product)) {
-			openIndices.push(i);
-		}
-	}
+	const openIndices = items.flatMap((item, i) => (isOpenPriceForTotal(item.product) ? [i] : []));
 	if (openIndices.length === 0) {
 		return items;
 	}
 
-	const fixedSum = cartMinimumTotal(items);
-	const currentLines = openIndices.map((idx) => lineTotal(items[idx]));
-	const currentOpenSum = currentLines.reduce((sum, value) => sum + value, 0);
-	const targetOpenSum = Math.max(desiredTotalCents, fixedSum) - fixedSum;
-	const delta = targetOpenSum - currentOpenSum;
+	const minimumTotal = cartMinimumTotal(items);
+	const openTarget = Math.max(desiredTotalCents, minimumTotal) - minimumTotal;
+	const quantities = openIndices.map((index) => items[index].quantity);
+	const lines = openIndices.map((index) => lineTotal(items[index]));
+	const delta = openTarget - lines.reduce((sum, line) => sum + line, 0);
 
-	const n = openIndices.length;
-	const baseShare = Math.trunc(delta / n);
-	let remainder = delta - baseShare * n;
-
-	const newLines = currentLines.map((currentLine) => {
-		let share = baseShare;
-		if (remainder > 0) {
-			share += 1;
-			remainder -= 1;
-		} else if (remainder < 0) {
-			share -= 1;
-			remainder += 1;
-		}
-		return Math.max(0, currentLine + share);
+	// Same change on every line, the remainder going to the first ones.
+	const share = Math.trunc(delta / lines.length);
+	let remainder = delta - share * lines.length;
+	const newLines = lines.map((line) => {
+		const extra = Math.sign(remainder);
+		remainder -= extra;
+		return Math.max(0, line + share + extra);
 	});
 
-	let assigned = newLines.reduce((sum, value) => sum + value, 0);
-	let leftover = assigned - targetOpenSum;
-	while (leftover > 0) {
-		const active = newLines.map((value, i) => (value > 0 ? i : -1)).filter((i) => i >= 0);
-		if (active.length === 0) {
-			break;
-		}
-		const cutEach = Math.max(1, Math.trunc(leftover / active.length));
+	// Lines stopped at 0 couldn't take their whole part of a cut: the others take the rest.
+	let excess = newLines.reduce((sum, line) => sum + line, 0) - openTarget;
+	while (excess > 0) {
+		const active = newLines.flatMap((line, i) => (line > 0 ? [i] : []));
+		const cut = Math.max(1, Math.trunc(excess / active.length));
 		for (const i of active) {
-			if (leftover <= 0) {
-				break;
-			}
-			const cut = Math.min(newLines[i], cutEach, leftover);
-			newLines[i] -= cut;
-			leftover -= cut;
+			const amount = Math.min(newLines[i], cut, excess);
+			newLines[i] -= amount;
+			excess -= amount;
 		}
 	}
-	leftover = targetOpenSum - newLines.reduce((sum, value) => sum + value, 0);
-	for (let i = 0; leftover > 0; i++) {
-		newLines[i % n] += 1;
-		leftover -= 1;
-	}
 
-	const newUnitPrices = openIndices.map((idx, i) => {
-		const qty = items[idx].quantity;
-		return Math.max(0, Math.floor(newLines[i] / qty));
-	});
-
-	let actualOpenSum = openIndices.reduce(
-		(sum, idx, i) => sum + newUnitPrices[i] * items[idx].quantity,
-		0
-	);
-	let drift = targetOpenSum - actualOpenSum;
-	let guard = 0;
-	while (drift !== 0 && guard < 10000) {
-		guard += 1;
-		if (drift > 0) {
-			let progressed = false;
-			for (let i = 0; i < n; i++) {
-				const qty = items[openIndices[i]].quantity;
-				if (qty <= drift) {
-					newUnitPrices[i] += 1;
-					drift -= qty;
-					progressed = true;
-					if (drift === 0) {
-						break;
-					}
-				}
-			}
-			if (!progressed) {
-				break;
-			}
-		} else {
-			let progressed = false;
-			for (let i = 0; i < n; i++) {
-				if (newUnitPrices[i] <= 0) {
-					continue;
-				}
-				const qty = items[openIndices[i]].quantity;
-				newUnitPrices[i] -= 1;
-				drift += qty;
+	// Round unit prices down to whole cents, then add cents back while the target allows it.
+	const unitPrices = newLines.map((line, i) => Math.floor(line / quantities[i]));
+	let missing = openTarget - unitPrices.reduce((sum, price, i) => sum + price * quantities[i], 0);
+	let progressed = true;
+	while (missing > 0 && progressed) {
+		progressed = false;
+		quantities.forEach((quantity, i) => {
+			if (quantity <= missing) {
+				unitPrices[i] += 1;
+				missing -= quantity;
 				progressed = true;
-				if (drift >= 0) {
-					break;
-				}
 			}
-			if (!progressed) {
-				break;
-			}
-		}
+		});
 	}
 
-	return items.map((item, idx) => {
-		const openPos = openIndices.indexOf(idx);
-		if (openPos < 0) {
-			return item;
-		}
-		return { ...item, unitPrice: newUnitPrices[openPos] };
+	return items.map((item, index) => {
+		const i = openIndices.indexOf(index);
+		return i < 0 ? item : { ...item, unitPrice: unitPrices[i] };
 	});
 }
 

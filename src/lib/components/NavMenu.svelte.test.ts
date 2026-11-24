@@ -25,7 +25,7 @@ vi.mock('#lib/stores/app-config.ts', async () => {
 import { setConfigValue } from '#lib/stores/app-config.ts';
 import NavMenu from './NavMenu.svelte';
 
-describe('NavMenu (staff navigation)', () => {
+describe('NavMenu', () => {
 	beforeEach(() => {
 		vi.mocked(setConfigValue).mockClear();
 		document.body.removeAttribute('data-bs-theme');
@@ -43,7 +43,7 @@ describe('NavMenu (staff navigation)', () => {
 		expect(screen.getByRole('link', { name: 'Commandes' })).toHaveAttribute('href', '/orders');
 	});
 
-	it('toggles dark mode for the workstation', async () => {
+	it('toggles dark mode', async () => {
 		const user = userEvent.setup();
 		render(NavMenu);
 

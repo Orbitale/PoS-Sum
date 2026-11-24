@@ -1,3 +1,5 @@
+// Prices and totals are in cents, weights in kilograms.
+
 export interface Category {
 	id: string;
 	label: string;
@@ -22,20 +24,13 @@ export interface ConfigurationEntry {
 	value: string;
 }
 
-export interface UpdateConfigurationPayload {
-	id: string;
-	value: string;
-}
-
 export interface Product {
 	id: string;
 	name: string;
-	/** Price in cents (e.g. 150 = 1.50 EUR). */
 	price: number;
-	/** Foreign key referencing the categories table. */
 	category_id: string;
 	available: boolean;
-	/** When false, the catalog price is only a recommendation. */
+	/** When false, the price is only a suggestion and can be changed on each order. */
 	fixed_price: boolean;
 }
 
@@ -46,7 +41,6 @@ export interface Order {
 	created_at: string;
 	total: number;
 	payment_method: PaymentMethod;
-	/** Optional weight in kilograms. */
 	weight: number | null;
 }
 
@@ -61,7 +55,6 @@ export interface OrderItem {
 	comment: string;
 }
 
-/** Flattened via #[serde(flatten)] on the Rust side. */
 export interface OrderWithItems extends Order {
 	items: OrderItem[];
 }
@@ -77,13 +70,11 @@ export interface CreateOrderItemPayload {
 export interface CreateOrderPayload {
 	items: CreateOrderItemPayload[];
 	payment_method: PaymentMethod;
-	/** Optional weight in kilograms. */
 	weight?: number | null;
 }
 
 export interface CreateProductPayload {
 	name: string;
-	/** Price in cents. */
 	price: number;
 	category_id: string;
 	fixed_price?: boolean;
@@ -92,22 +83,17 @@ export interface CreateProductPayload {
 export interface UpdateProductPayload {
 	id: string;
 	name: string;
-	/** Price in cents. */
 	price: number;
 	category_id: string;
 	available: boolean;
 	fixed_price: boolean;
 }
 
-// ── App Version ──────────────────────────────────────────────────────────────
-
 export interface AppVersion {
 	version: string;
 	os: string;
 	arch: string;
 }
-
-// ── Dashboard ────────────────────────────────────────────────────────────────
 
 export interface ProductSalesSummary {
 	product_id: string;
@@ -129,11 +115,10 @@ export interface DashboardSummary {
 	per_payment_method: PaymentMethodBreakdown[];
 }
 
-/** Client-side cart item (product + chosen quantity + sale overrides). */
 export interface CartItem {
 	product: Product;
 	quantity: number;
-	/** Unit price in cents for this cart line (may differ from product.price). */
+	/** Can differ from product.price when the price was changed for this order. */
 	unitPrice: number;
 	comment: string;
 }

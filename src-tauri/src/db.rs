@@ -3,9 +3,6 @@ use std::sync::Mutex;
 use tauri::AppHandle;
 use tauri::Manager;
 
-/// Wrapper around a SQLite connection so it can be managed as Tauri state.
-/// The Mutex ensures that concurrent command invocations do not race on the
-/// single connection.
 pub struct DbState {
     pub conn: Mutex<Connection>,
     pub db_path: String,
@@ -19,8 +16,6 @@ pub fn migrations() -> Vec<rusqlite_migration::M<'static>> {
     ]
 }
 
-/// Default configuration rows. Re-inserted with INSERT OR IGNORE on every startup
-/// so missing options (including deliberately deleted ones) are restored.
 const CONFIG_DEFAULTS: &[(&str, &str, &str)] = &[
     ("shop_name", "Shop name", ""),
     ("order_weight_enabled", "Activate weight field in Order page", "0"),
@@ -43,7 +38,6 @@ pub fn ensure_configuration_defaults(conn: &Connection) {
     }
 }
 
-/// Supported placeholder catalogs that can replace products/categories.
 pub fn load_default_dataset(conn: &Connection, dataset: &str) -> Result<(), String> {
     let sql = match dataset {
         "snackbar" => include_str!("./seed/snackbar.sql"),
@@ -82,20 +76,12 @@ pub fn init_db_in_memory() -> DbState {
     }
 }
 
-/// Opens (or creates) the SQLite database file inside the app's data directory
-/// and returns a `DbState` ready to be managed by Tauri.
-///
-/// The database file is named `pos_sum.db` and lives in the directory returned by
-/// `app_handle.path().app_data_dir()`.
-///
-/// Default products/categories are intentionally NOT loaded on first create.
 pub fn init_db(app_handle: &AppHandle) -> Result<DbState, String> {
     let data_dir = app_handle
         .path()
         .app_data_dir()
         .map_err(|e| format!("Failed to resolve app data dir: {e}"))?;
 
-    // Ensure the directory exists.
     std::fs::create_dir_all(&data_dir)
         .map_err(|e| format!("Failed to create app data dir: {e}"))?;
 
@@ -104,11 +90,9 @@ pub fn init_db(app_handle: &AppHandle) -> Result<DbState, String> {
     let mut conn = Connection::open(&db_path)
         .map_err(|e| format!("Failed to open database at {}: {e}", db_path.display()))?;
 
-    // Enable WAL mode for better concurrent read performance.
     conn.execute_batch("PRAGMA journal_mode=WAL;")
         .map_err(|e| format!("Failed to set WAL mode: {e}"))?;
 
-    // Enable foreign keys.
     conn.execute_batch("PRAGMA foreign_keys=ON;")
         .map_err(|e| format!("Failed to enable foreign keys: {e}"))?;
 

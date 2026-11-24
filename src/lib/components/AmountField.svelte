@@ -16,7 +16,6 @@
 		allowNegative?: boolean;
 		showNumpad?: boolean;
 		hint?: string;
-		/** Extra content rendered next to the label (e.g. original/minimum hints). */
 		labelExtra?: Snippet;
 		onValueChange: (value: string) => void;
 	}

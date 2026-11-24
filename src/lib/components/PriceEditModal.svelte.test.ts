@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import PriceEditModal from './PriceEditModal.svelte';
 
-describe('PriceEditModal (amount override)', () => {
-	it('shows the original/minimum context for total edits', () => {
+describe('PriceEditModal', () => {
+	it('shows the original and minimum totals', () => {
 		render(PriceEditModal, {
 			props: {
 				title: 'Modifier le total de la commande',

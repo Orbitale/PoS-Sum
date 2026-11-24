@@ -1,4 +1,3 @@
-/** Converts integer cents to a formatted euro string, e.g. 150 → "1,50 €". */
 export function formatPrice(cents: number): string {
 	const sign = cents < 0 ? '-' : '';
 	const abs = Math.abs(cents);

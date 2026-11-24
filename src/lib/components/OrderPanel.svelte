@@ -40,7 +40,6 @@
 	let totalEditOpen = $state(false);
 
 	let total = $derived(cartTotal(items));
-	/** Floor when open-price lines are zeroed; custom lines keep their amount. */
 	let minimumTotal = $derived(cartMinimumTotal(items));
 	let isEmpty = $derived(items.length === 0);
 	let hasOpenPrice = $derived(hasOpenPriceItems(items));
@@ -68,7 +67,7 @@
 	});
 
 	$effect(() => {
-		// Re-init tooltips when cart items change (new 💬 buttons appear).
+		// Re-run when rows are added, so their tooltips get created too.
 		items.length;
 		const Tooltip = window.bootstrap?.Tooltip;
 		if (!Tooltip) return;

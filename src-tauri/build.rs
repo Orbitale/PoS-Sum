@@ -2,7 +2,6 @@ use std::path::Path;
 use std::process::Command;
 
 fn main() {
-    // ── App version from release-name file ──────────────────────────────────
     let release_name_path = Path::new("../release-name");
 
     let version = if release_name_path.exists() {
@@ -27,7 +26,6 @@ fn main() {
     println!("cargo:rustc-env=APP_VERSION={version}");
     println!("cargo:rerun-if-changed=../release-name");
 
-    // ── OS & architecture ───────────────────────────────────────────────────
     let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
     let os = target_os.as_str();
     println!("cargo:rustc-env=APP_OS={os}");

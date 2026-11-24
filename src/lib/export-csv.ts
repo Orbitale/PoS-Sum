@@ -3,7 +3,6 @@ import { APP_TARGET, type AppTarget } from '#lib/api.ts';
 export async function downloadCsv(
 	filename: string,
 	csv: string,
-	/** Override for tests; defaults to the build-time app target. */
 	target: AppTarget = APP_TARGET
 ): Promise<void> {
 	if (target === 'tauri') {

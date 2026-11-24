@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { formatPrice } from './format.ts';
 
 describe('formatPrice', () => {
-	it('formats cents as euro strings with a narrow no-break space', () => {
+	it('formats cents as euros', () => {
 		expect(formatPrice(150)).toBe('1,50 €');
 		expect(formatPrice(0)).toBe('0,00 €');
 		expect(formatPrice(5)).toBe('0,05 €');

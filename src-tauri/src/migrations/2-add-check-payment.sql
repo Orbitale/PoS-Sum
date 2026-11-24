@@ -1,4 +1,4 @@
--- Widen payment_method CHECK to include 'check' (SQLite cannot ALTER CHECK in place).
+-- SQLite can't change a CHECK constraint in place, so the table is rebuilt to allow 'check'.
 CREATE TABLE orders_new (
     id              TEXT PRIMARY KEY NOT NULL,
     created_at      TEXT NOT NULL,

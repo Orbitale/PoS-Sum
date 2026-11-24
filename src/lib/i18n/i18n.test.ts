@@ -7,12 +7,12 @@ describe('i18n', () => {
 		locale.set('fr');
 	});
 
-	it('interpolates params used by cashier-facing messages', () => {
+	it('interpolates params', () => {
 		expect(get(t)('order.totalBelowMinimum', { minimum: '2,00 €' })).toContain('2,00 €');
 		expect(get(t)('order.decreaseQuantity', { name: 'Thé' })).toContain('Thé');
 	});
 
-	it('switches locale for the cashier', () => {
+	it('switches locale', () => {
 		expect(get(t)('checkout.cash')).toBe('Espèces');
 		locale.set('en');
 		expect(get(t)('checkout.cash')).toBe('Cash');

@@ -32,7 +32,7 @@ describe('buildOrdersCsv', () => {
 		colSubtotal: 'Sub'
 	};
 
-	it('builds a product-pivoted export', () => {
+	it('gives each product its own columns', () => {
 		const orders: OrderWithItems[] = [
 			{
 				id: 'ord-1',
@@ -116,8 +116,7 @@ describe('buildOrdersCsv', () => {
 		const [, row1, row2] = csv.split('\n');
 		expect(csv).toContain('"Tea (Unit)"');
 		expect(csv).toContain('"Coffee (Unit)"');
-		// ord-1 has Tea filled and Coffee blank triples; count empty quoted cells
-		expect(row1.split(';').filter((c) => c === '""').length).toBeGreaterThanOrEqual(3);
-		expect(row2.split(';').filter((c) => c === '""').length).toBeGreaterThanOrEqual(3);
+		expect(row1.split(';').slice(5)).toEqual(['"1.50"', '"1"', '"1.50"', '""', '""', '""']);
+		expect(row2.split(';').slice(5)).toEqual(['""', '""', '""', '"2.00"', '"1"', '"2.00"']);
 	});
 });

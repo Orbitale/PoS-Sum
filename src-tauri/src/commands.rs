@@ -6,8 +6,6 @@ use uuid::Uuid;
 use crate::db::DbState;
 use crate::models::*;
 
-// ── Inner functions (testable without Tauri runtime) ────────────────────────
-
 pub(crate) fn list_configuration_inner(db: &DbState) -> Result<Vec<ConfigurationEntry>, String> {
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
     crate::db::ensure_configuration_defaults(&conn);
@@ -567,7 +565,6 @@ pub(crate) fn reset_database_inner(db: &DbState) -> Result<(), String> {
         .to_latest(&mut *conn)
         .map_err(|e| format!("Migration error: {e}"))?;
 
-    // Restore configuration defaults only — no placeholder products/categories.
     crate::db::ensure_configuration_defaults(&conn);
 
     Ok(())
@@ -589,8 +586,6 @@ fn reset_sales_inner(state: &DbState) -> Result<(), String> {
 
     Ok(())
 }
-
-// ── Tauri command wrappers ──────────────────────────────────────────────────
 
 #[tauri::command]
 pub fn list_configuration(state: State<'_, DbState>) -> Result<Vec<ConfigurationEntry>, String> {
@@ -711,8 +706,6 @@ pub fn get_app_version() -> AppVersion {
         arch: env!("APP_ARCH").to_string(),
     }
 }
-
-// ── Tests ───────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod tests {
@@ -1198,7 +1191,6 @@ mod tests {
         assert!(list_categories_inner(&db).unwrap().is_empty());
         let entries = list_configuration_inner(&db).unwrap();
         assert!(entries.iter().any(|e| e.id == "shop_name"));
-        // Fresh DB restores default empty shop name
         let shop = entries.iter().find(|e| e.id == "shop_name").unwrap();
         assert_eq!(shop.value, "");
     }

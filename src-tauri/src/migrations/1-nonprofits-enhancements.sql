@@ -1,7 +1,6 @@
--- Optional order weight (kilograms).
+-- In kilograms.
 ALTER TABLE orders ADD COLUMN weight REAL;
 
--- Application configuration key/value store.
 CREATE TABLE IF NOT EXISTS configuration (
     id    TEXT PRIMARY KEY NOT NULL,
     name  TEXT NOT NULL,
@@ -15,8 +14,7 @@ INSERT OR IGNORE INTO configuration (id, name, value) VALUES
     ('shop_language', 'Shop language', 'fr'),
     ('theme', 'Dark/Light mode', 'light');
 
--- 1 = fixed catalog price, 0 = updatable/recommended price at sale time.
+-- 0 means the price is only a suggestion and can be changed on each order.
 ALTER TABLE products ADD COLUMN fixed_price INTEGER NOT NULL DEFAULT 1;
 
--- Free-text note attached to a sold line item.
 ALTER TABLE order_items ADD COLUMN comment TEXT NOT NULL DEFAULT '';

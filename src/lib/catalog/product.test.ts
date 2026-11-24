@@ -13,7 +13,7 @@ describe('catalog product helpers', () => {
 		expect(isCustomProduct({ category_id: 'drinks' })).toBe(false);
 	});
 
-	it('treats only non-custom open-price catalog items as total-cut targets', () => {
+	it('only lets non-custom open-price products absorb total edits', () => {
 		expect(isOpenPriceForTotal({ fixed_price: false, category_id: 'drinks' })).toBe(true);
 		expect(isOpenPriceForTotal({ fixed_price: true, category_id: 'drinks' })).toBe(false);
 		expect(
@@ -32,7 +32,7 @@ describe('catalog product helpers', () => {
 		).toBe(true);
 	});
 
-	it('creates a custom product with editable fixed_price semantics', () => {
+	it('creates custom products that are editable but excluded from total edits', () => {
 		const product = createCustomProduct('Extra', 350);
 		expect(product.name).toBe('Extra');
 		expect(product.price).toBe(350);

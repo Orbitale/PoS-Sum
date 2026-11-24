@@ -38,7 +38,7 @@ const products: Product[] = [
 	}
 ];
 
-describe('ProductGrid (cashier scenarios)', () => {
+describe('ProductGrid', () => {
 	beforeEach(() => {
 		appConfig.set({ custom_product_enabled: '0' });
 		groupedCategories.set(new Set());

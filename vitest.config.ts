@@ -2,7 +2,6 @@ import { svelteTesting } from '@testing-library/svelte/vite';
 import { defineConfig, mergeConfig } from 'vitest/config';
 import viteConfig from './vite.config.js';
 
-// Unit: *.test.ts on Node. Components: *.svelte.test.ts on jsdom + Testing Library.
 export default mergeConfig(
 	viteConfig,
 	defineConfig({

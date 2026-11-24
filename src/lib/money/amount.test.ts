@@ -7,7 +7,7 @@ import {
 	sanitizeAmountInput
 } from './amount.ts';
 
-describe('money parsing / formatting (data core)', () => {
+describe('amount parsing and formatting', () => {
 	it('round-trips cents through the editable input format', () => {
 		expect(formatCentsToInput(150)).toBe('1,50');
 		expect(formatCentsToInput(0)).toBe('0,00');
@@ -37,14 +37,14 @@ describe('money parsing / formatting (data core)', () => {
 	});
 });
 
-describe('amount input sanitization / numpad (data core)', () => {
+describe('amount input and numpad', () => {
 	it('keeps a single separator and strips letters', () => {
 		expect(sanitizeAmountInput('12,3,4')).toBe('12,34');
 		expect(sanitizeAmountInput('12.3.4')).toBe('12.34');
 		expect(sanitizeAmountInput('1a2b,3c')).toBe('12,3');
 	});
 
-	it('can forbid negatives for cash and totals', () => {
+	it('can forbid negatives', () => {
 		expect(sanitizeAmountInput('-12,50', { allowNegative: false })).toBe('12,50');
 		expect(applyNumpadKey('10', '-', { allowNegative: false })).toBe('10');
 	});

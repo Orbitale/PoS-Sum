@@ -32,7 +32,7 @@ const noopHandlers = {
 	onClear: vi.fn()
 };
 
-describe('OrderPanel (cashier scenarios)', () => {
+describe('OrderPanel', () => {
 	beforeEach(() => {
 		appConfig.set({ order_weight_enabled: '0' });
 		vi.stubGlobal('bootstrap', undefined);
@@ -50,7 +50,7 @@ describe('OrderPanel (cashier scenarios)', () => {
 		expect(screen.getByRole('button', { name: 'Effacer' })).toBeDisabled();
 	});
 
-	it('lets the cashier adjust quantity, clear, and start checkout', async () => {
+	it('changes quantities, clears the cart and starts checkout', async () => {
 		const user = userEvent.setup();
 		const onIncrease = vi.fn();
 		const onDecrease = vi.fn();
@@ -120,7 +120,7 @@ describe('OrderPanel (cashier scenarios)', () => {
 		expect(onUnitPriceChange).toHaveBeenCalledWith('a', 300);
 	});
 
-	it('does not change price when the cashier cancels the price dialog', async () => {
+	it('keeps the price when the price dialog is cancelled', async () => {
 		const user = userEvent.setup();
 		const onUnitPriceChange = vi.fn();
 		const items = [
@@ -156,7 +156,7 @@ describe('OrderPanel (cashier scenarios)', () => {
 		expect(onTotalChange).toHaveBeenCalledWith(350);
 	});
 
-	it('refuses a total below the fixed+custom floor', async () => {
+	it('refuses a total below the minimum', async () => {
 		const user = userEvent.setup();
 		const onTotalChange = vi.fn();
 		const items = [
@@ -187,7 +187,7 @@ describe('OrderPanel (cashier scenarios)', () => {
 		expect(onTotalChange).not.toHaveBeenCalled();
 	});
 
-	it('annotates a cart line with a comment', async () => {
+	it('adds a comment to a line', async () => {
 		const user = userEvent.setup();
 		const onCommentChange = vi.fn();
 		const items = [item(product({ id: 'a', name: 'Thé', price: 100 }), 1, 100)];

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import CustomProductModal from './CustomProductModal.svelte';
 
-describe('CustomProductModal (cashier scenarios)', () => {
+describe('CustomProductModal', () => {
 	it('requires a name before adding to the order', () => {
 		render(CustomProductModal, {
 			props: { onConfirm: vi.fn(), onCancel: vi.fn() }
@@ -11,7 +11,7 @@ describe('CustomProductModal (cashier scenarios)', () => {
 		expect(screen.getByRole('button', { name: /Ajouter à la commande/ })).toBeDisabled();
 	});
 
-	it('adds an on-the-fly product with a numpad price', async () => {
+	it('adds a product priced with the numpad', async () => {
 		const user = userEvent.setup();
 		const onConfirm = vi.fn();
 		render(CustomProductModal, {

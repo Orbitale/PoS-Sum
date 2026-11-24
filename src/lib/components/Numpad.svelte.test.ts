@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import Numpad from './Numpad.svelte';
 
 describe('Numpad', () => {
-	it('remaps backspace and minus keys for amount entry', async () => {
+	it('maps the backspace and minus buttons to key names', async () => {
 		const user = userEvent.setup();
 		const onKeyPress = vi.fn();
 		render(Numpad, { props: { onKeyPress } });

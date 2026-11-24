@@ -29,8 +29,8 @@ function item(p: Product, quantity = 1, unitPrice = p.price, comment = ''): Cart
 	return { product: p, quantity, unitPrice, comment };
 }
 
-describe('cashier sale pipeline (data core)', () => {
-	it('runs a mixed cart through qty, open-price total cut, comment, then order payload', () => {
+describe('full sale', () => {
+	it('takes a mixed cart from first item to order payload', () => {
 		const tea = product({ id: 'tea', name: 'Thé', price: 150, fixed_price: true });
 		const soup = product({ id: 'soup', name: 'Soupe', price: 400, fixed_price: false });
 
@@ -44,7 +44,7 @@ describe('cashier sale pipeline (data core)', () => {
 		expect(cartMinimumTotal(cart)).toBe(150 * 2 + 200);
 		expect(hasOpenPriceItems(cart)).toBe(true);
 
-		// Customer pays 700 instead of 900: only the open-price line absorbs the cut.
+		// Only the soup has an open price, so it takes the whole cut.
 		cart = redistributeOpenPricesToTotal(cart, 700);
 		expect(cartTotal(cart)).toBe(700);
 		expect(cart.find((i) => i.product.id === 'tea')?.unitPrice).toBe(150);
@@ -77,7 +77,7 @@ describe('cashier sale pipeline (data core)', () => {
 	});
 });
 
-describe('line / cart totals', () => {
+describe('totals', () => {
 	it('sums line totals', () => {
 		const items = [
 			item(product({ id: 'a', name: 'A', price: 100 }), 2, 100),
@@ -88,8 +88,8 @@ describe('line / cart totals', () => {
 	});
 });
 
-describe('open-price minimum / detection', () => {
-	it('zeros open-price catalog lines in the floor; custom stays', () => {
+describe('open prices', () => {
+	it('counts open-price lines as 0 in the minimum total', () => {
 		const fixed = item(product({ id: 'f', name: 'Fixed', price: 300, fixed_price: true }));
 		const open = item(
 			product({ id: 'o', name: 'Open', price: 500, fixed_price: false }),
@@ -165,7 +165,7 @@ describe('redistributeOpenPricesToTotal', () => {
 		expect(next.map((i) => i.unitPrice)).toEqual([200, 200, 200]);
 	});
 
-	it('never goes below the fixed+custom floor', () => {
+	it('never goes below the minimum total', () => {
 		const fixed = item(product({ id: 'f', name: 'Fixed', price: 300, fixed_price: true }));
 		const open = item(
 			product({ id: 'o', name: 'Open', price: 500, fixed_price: false }),
@@ -182,7 +182,7 @@ describe('redistributeOpenPricesToTotal', () => {
 		expect(redistributeOpenPricesToTotal(items, 50)).toEqual(items);
 	});
 
-	it('matches desired total with multi-qty open lines (cent drift)', () => {
+	it('reaches the exact total with multi-quantity lines', () => {
 		const openA = item(
 			product({ id: 'a', name: 'A', price: 100, fixed_price: false }),
 			3,

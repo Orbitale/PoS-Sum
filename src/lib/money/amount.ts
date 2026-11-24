@@ -2,15 +2,10 @@ export interface AmountInputOptions {
 	allowNegative?: boolean;
 }
 
-/** Format integer cents for an editable amount field (e.g. 150 → "1,50"). */
 export function formatCentsToInput(cents: number): string {
 	return (cents / 100).toFixed(2).replace('.', ',');
 }
 
-/**
- * Parse a user amount string (comma or dot decimal) into integer cents.
- * Empty / invalid input yields `0`.
- */
 export function parseEurosToCents(input: string): number {
 	if (input.trim() === '') {
 		return 0;
@@ -19,7 +14,6 @@ export function parseEurosToCents(input: string): number {
 	return Number.isNaN(val) ? 0 : Math.round(val * 100);
 }
 
-/** Parse an optional weight (or similar) float; empty → null. */
 export function parseOptionalFloat(input: string): number | null {
 	const trimmed = input.trim();
 	if (trimmed === '') {
@@ -29,7 +23,6 @@ export function parseOptionalFloat(input: string): number | null {
 	return Number.isFinite(parsed) ? parsed : null;
 }
 
-/** Keep only a valid signed decimal amount string (`,` or `.` as separator). */
 export function sanitizeAmountInput(
 	raw: string,
 	options: AmountInputOptions = {}
@@ -56,10 +49,6 @@ export function sanitizeAmountInput(
 	return `${intPart}${sep}${fracPart}`;
 }
 
-/**
- * Apply a Numpad key to the current amount string.
- * Keys: digits, ",", ",00", ",50", "backspace", "-".
- */
 export function applyNumpadKey(
 	current: string,
 	key: string,

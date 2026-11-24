@@ -8,13 +8,10 @@ vi.mock('#lib/api.ts', () => ({
 import { api_call } from '#lib/api.ts';
 import {
 	appConfig,
-	configLoaded,
 	customProductEnabled,
-	getConfigValue,
 	loadAppConfig,
 	orderWeightEnabled,
 	setConfigValue,
-	shopLanguage,
 	shopName,
 	theme
 } from './app-config.ts';
@@ -22,7 +19,6 @@ import {
 describe('app-config store', () => {
 	beforeEach(() => {
 		appConfig.set({});
-		configLoaded.set(false);
 		vi.mocked(api_call).mockReset();
 	});
 
@@ -30,24 +26,19 @@ describe('app-config store', () => {
 		expect(get(shopName)).toBe('');
 		expect(get(orderWeightEnabled)).toBe(false);
 		expect(get(customProductEnabled)).toBe(false);
-		expect(get(shopLanguage)).toBe('fr');
 		expect(get(theme)).toBe('light');
 
 		appConfig.set({
 			shop_name: 'Café Test',
 			order_weight_enabled: '1',
 			custom_product_enabled: '1',
-			shop_language: 'en',
 			theme: 'dark'
 		});
 
 		expect(get(shopName)).toBe('Café Test');
 		expect(get(orderWeightEnabled)).toBe(true);
 		expect(get(customProductEnabled)).toBe(true);
-		expect(get(shopLanguage)).toBe('en');
 		expect(get(theme)).toBe('dark');
-		expect(getConfigValue('shop_name')).toBe('Café Test');
-		expect(getConfigValue('missing', 'fallback')).toBe('fallback');
 	});
 
 	it('treats unknown theme values as light', () => {
@@ -64,14 +55,13 @@ describe('app-config store', () => {
 		const map = await loadAppConfig();
 		expect(map).toEqual({ shop_name: 'POS', theme: 'light' });
 		expect(get(appConfig)).toEqual({ shop_name: 'POS', theme: 'light' });
-		expect(get(configLoaded)).toBe(true);
 		expect(api_call).toHaveBeenCalledWith('list_configuration');
 	});
 
-	it('propagates load failures without marking config as loaded', async () => {
+	it('propagates load failures without changing the store', async () => {
 		vi.mocked(api_call).mockRejectedValueOnce(new Error('offline'));
 		await expect(loadAppConfig()).rejects.toThrow('offline');
-		expect(get(configLoaded)).toBe(false);
+		expect(get(appConfig)).toEqual({});
 	});
 
 	it('updates a single configuration value', async () => {

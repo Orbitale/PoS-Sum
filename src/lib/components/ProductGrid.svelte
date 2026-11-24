@@ -120,7 +120,6 @@
 </div>
 
 <style>
-	/* btn d-flex flex-column align-items-center justify-content-center */
 	.gridBtn {
 		min-height: 80px;
 		color: white;

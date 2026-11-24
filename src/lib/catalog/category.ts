@@ -1,4 +1,3 @@
-/** Normalize a category id slug for create forms. */
 export function sanitizeCategoryId(value: string): string {
 	return value
 		.toLowerCase()

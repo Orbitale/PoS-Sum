@@ -11,9 +11,7 @@
 		subtitle?: string;
 		label?: string;
 		initialCents: number;
-		/** When set, shown next to the label as the originally calculated amount. */
 		originalCents?: number | null;
-		/** When set, amounts below this cannot be confirmed. */
 		minimumCents?: number | null;
 		allowNegative?: boolean;
 		onConfirm: (cents: number) => void;

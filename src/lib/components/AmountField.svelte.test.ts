@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import AmountField from './AmountField.svelte';
 
-describe('AmountField (money entry)', () => {
+describe('AmountField', () => {
 	it('shows validation state and can hide the numpad', () => {
 		render(AmountField, {
 			props: {
@@ -53,7 +53,7 @@ describe('AmountField (money entry)', () => {
 		expect(onValueChange).toHaveBeenCalledWith('3,00');
 	});
 
-	it('blocks negative amounts when disallowed (cash / totals)', async () => {
+	it('blocks negative amounts when not allowed', async () => {
 		const user = userEvent.setup();
 		const onValueChange = vi.fn();
 		render(AmountField, {

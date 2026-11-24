@@ -18,7 +18,7 @@ function cartItem(partial: Partial<Product> & Pick<Product, 'id' | 'name' | 'pri
 	};
 }
 
-describe('CheckoutModal (cashier scenarios)', () => {
+describe('CheckoutModal', () => {
 	const items = [cartItem({ id: 'p1', name: 'Thé', price: 150 })];
 
 	it('shows the ticket and blocks confirm until a payment method is chosen', () => {
