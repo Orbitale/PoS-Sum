@@ -23,10 +23,7 @@ export function parseOptionalFloat(input: string): number | null {
 	return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function sanitizeAmountInput(
-	raw: string,
-	options: AmountInputOptions = {}
-): string {
+export function sanitizeAmountInput(raw: string, options: AmountInputOptions = {}): string {
 	const allowNegative = options.allowNegative ?? true;
 	const pattern = allowNegative ? /[^\d,.\-]/g : /[^\d,.]/g;
 	let value = raw.replace(pattern, '');

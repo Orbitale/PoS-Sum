@@ -23,9 +23,7 @@
 	let priceInput = $state(
 		untrack(() => (product ? (product.price / 100).toFixed(2).replace('.', ',') : ''))
 	);
-	let category_id = $state(
-		untrack(() => product?.category_id ?? categories[0]?.id ?? '')
-	);
+	let category_id = $state(untrack(() => product?.category_id ?? categories[0]?.id ?? ''));
 	let available = $state(untrack(() => product?.available ?? true));
 	let fixed_price = $state(untrack(() => product?.fixed_price ?? true));
 	let isSubmitting = $state(false);

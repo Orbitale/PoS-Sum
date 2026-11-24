@@ -42,8 +42,6 @@ describe('catalog product helpers', () => {
 		expect(isCustomProduct(product)).toBe(true);
 		expect(isOpenPriceForTotal(product)).toBe(false);
 		expect(canEditCartUnitPrice(product)).toBe(true);
-		expect(product.id).toMatch(
-			/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-		);
+		expect(product.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
 	});
 });

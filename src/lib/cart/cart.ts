@@ -25,9 +25,7 @@ export function hasOpenPriceItems(items: CartItem[]): boolean {
 export function addProductToCart(items: CartItem[], product: Product): CartItem[] {
 	const existing = items.find((i) => i.product.id === product.id);
 	if (existing) {
-		return items.map((i) =>
-			i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
-		);
+		return items.map((i) => (i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i));
 	}
 	return [...items, { product, quantity: 1, unitPrice: product.price, comment: '' }];
 }
@@ -42,9 +40,7 @@ export function addCustomProductToCart(
 }
 
 export function increaseCartQuantity(items: CartItem[], productId: string): CartItem[] {
-	return items.map((i) =>
-		i.product.id === productId ? { ...i, quantity: i.quantity + 1 } : i
-	);
+	return items.map((i) => (i.product.id === productId ? { ...i, quantity: i.quantity + 1 } : i));
 }
 
 export function decreaseCartQuantity(items: CartItem[], productId: string): CartItem[] {
@@ -61,11 +57,7 @@ export function setCartUnitPrice(
 	return items.map((i) => (i.product.id === productId ? { ...i, unitPrice } : i));
 }
 
-export function setCartComment(
-	items: CartItem[],
-	productId: string,
-	comment: string
-): CartItem[] {
+export function setCartComment(items: CartItem[], productId: string, comment: string): CartItem[] {
 	return items.map((i) => (i.product.id === productId ? { ...i, comment } : i));
 }
 

@@ -13,10 +13,6 @@ describe('Numpad', () => {
 		await user.click(screen.getByRole('button', { name: '⌫' }));
 		await user.click(screen.getByRole('button', { name: '−' }));
 
-		expect(onKeyPress.mock.calls.map((call) => call[0])).toEqual([
-			'7',
-			'backspace',
-			'-'
-		]);
+		expect(onKeyPress.mock.calls.map((call) => call[0])).toEqual(['7', 'backspace', '-']);
 	});
 });

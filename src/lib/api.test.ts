@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { invoke } from '@tauri-apps/api/core';
+import { invoke as invokeBrowser } from '#lib/backend-browser/index.ts';
 
 vi.mock('@tauri-apps/api/core', () => ({
+	invoke: vi.fn()
+}));
+
+vi.mock('#lib/backend-browser/index.ts', () => ({
 	invoke: vi.fn()
 }));
 
@@ -10,6 +15,7 @@ import { api_call } from './api.ts';
 describe('api_call', () => {
 	beforeEach(() => {
 		vi.mocked(invoke).mockReset();
+		vi.mocked(invokeBrowser).mockReset();
 	});
 
 	it('forwards tauri commands to invoke', async () => {
@@ -25,13 +31,20 @@ describe('api_call', () => {
 		await expect(api_call('list_orders', {}, 'tauri')).rejects.toThrow('backend down');
 	});
 
-	it('rejects unimplemented web and static targets', async () => {
+	it('forwards static commands to the browser backend', async () => {
+		vi.mocked(invokeBrowser).mockResolvedValueOnce([{ id: 'p1' }]);
+		await expect(api_call('list_products', { active: true }, 'static')).resolves.toEqual([
+			{ id: 'p1' }
+		]);
+		expect(invokeBrowser).toHaveBeenCalledWith('list_products', { active: true });
+		expect(invoke).not.toHaveBeenCalled();
+	});
+
+	it('rejects the unimplemented web target', async () => {
 		await expect(api_call('list_products', {}, 'web')).rejects.toThrow(
 			'Web backend not yet implemented'
 		);
-		await expect(api_call('list_products', {}, 'static')).rejects.toThrow(
-			'Static backend not yet implemented'
-		);
 		expect(invoke).not.toHaveBeenCalled();
+		expect(invokeBrowser).not.toHaveBeenCalled();
 	});
 });

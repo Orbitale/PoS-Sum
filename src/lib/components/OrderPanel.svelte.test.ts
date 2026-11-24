@@ -6,9 +6,7 @@ import { CUSTOM_PRODUCT_CATEGORY_ID } from '#lib/catalog/index.ts';
 import { appConfig } from '#lib/stores/app-config.ts';
 import OrderPanel from './OrderPanel.svelte';
 
-function product(
-	partial: Partial<Product> & Pick<Product, 'id' | 'name' | 'price'>
-): Product {
+function product(partial: Partial<Product> & Pick<Product, 'id' | 'name' | 'price'>): Product {
 	return {
 		category_id: 'drinks',
 		available: true,
@@ -56,9 +54,7 @@ describe('OrderPanel', () => {
 		const onDecrease = vi.fn();
 		const onCheckout = vi.fn();
 		const onClear = vi.fn();
-		const items = [
-			item(product({ id: 'a', name: 'Thé', price: 150, fixed_price: false }), 2, 150)
-		];
+		const items = [item(product({ id: 'a', name: 'Thé', price: 150, fixed_price: false }), 2, 150)];
 
 		render(OrderPanel, {
 			props: {
@@ -104,9 +100,7 @@ describe('OrderPanel', () => {
 	it('edits an open-price line unit price', async () => {
 		const user = userEvent.setup();
 		const onUnitPriceChange = vi.fn();
-		const items = [
-			item(product({ id: 'a', name: 'Thé', price: 200, fixed_price: false }), 1, 200)
-		];
+		const items = [item(product({ id: 'a', name: 'Thé', price: 200, fixed_price: false }), 1, 200)];
 
 		render(OrderPanel, {
 			props: { items, weight: '', ...noopHandlers, onUnitPriceChange }
@@ -123,9 +117,7 @@ describe('OrderPanel', () => {
 	it('keeps the price when the price dialog is cancelled', async () => {
 		const user = userEvent.setup();
 		const onUnitPriceChange = vi.fn();
-		const items = [
-			item(product({ id: 'a', name: 'Thé', price: 200, fixed_price: false }), 1, 200)
-		];
+		const items = [item(product({ id: 'a', name: 'Thé', price: 200, fixed_price: false }), 1, 200)];
 
 		render(OrderPanel, {
 			props: { items, weight: '', ...noopHandlers, onUnitPriceChange }

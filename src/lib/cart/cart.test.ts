@@ -91,11 +91,7 @@ describe('totals', () => {
 describe('open prices', () => {
 	it('counts open-price lines as 0 in the minimum total', () => {
 		const fixed = item(product({ id: 'f', name: 'Fixed', price: 300, fixed_price: true }));
-		const open = item(
-			product({ id: 'o', name: 'Open', price: 500, fixed_price: false }),
-			1,
-			500
-		);
+		const open = item(product({ id: 'o', name: 'Open', price: 500, fixed_price: false }), 1, 500);
 		const custom = item(
 			product({
 				id: 'c',
@@ -150,16 +146,8 @@ describe('cart mutations', () => {
 describe('redistributeOpenPricesToTotal', () => {
 	it('shares a cut equally across open-price lines', () => {
 		const fixed = item(product({ id: 'f', name: 'Fixed', price: 200, fixed_price: true }));
-		const openA = item(
-			product({ id: 'a', name: 'A', price: 400, fixed_price: false }),
-			1,
-			400
-		);
-		const openB = item(
-			product({ id: 'b', name: 'B', price: 400, fixed_price: false }),
-			1,
-			400
-		);
+		const openA = item(product({ id: 'a', name: 'A', price: 400, fixed_price: false }), 1, 400);
+		const openB = item(product({ id: 'b', name: 'B', price: 400, fixed_price: false }), 1, 400);
 		const next = redistributeOpenPricesToTotal([fixed, openA, openB], 600);
 		expect(cartTotal(next)).toBe(600);
 		expect(next.map((i) => i.unitPrice)).toEqual([200, 200, 200]);
@@ -167,11 +155,7 @@ describe('redistributeOpenPricesToTotal', () => {
 
 	it('never goes below the minimum total', () => {
 		const fixed = item(product({ id: 'f', name: 'Fixed', price: 300, fixed_price: true }));
-		const open = item(
-			product({ id: 'o', name: 'Open', price: 500, fixed_price: false }),
-			1,
-			500
-		);
+		const open = item(product({ id: 'o', name: 'Open', price: 500, fixed_price: false }), 1, 500);
 		const next = redistributeOpenPricesToTotal([fixed, open], 100);
 		expect(cartTotal(next)).toBe(300);
 		expect(next[1].unitPrice).toBe(0);
@@ -183,27 +167,15 @@ describe('redistributeOpenPricesToTotal', () => {
 	});
 
 	it('reaches the exact total with multi-quantity lines', () => {
-		const openA = item(
-			product({ id: 'a', name: 'A', price: 100, fixed_price: false }),
-			3,
-			100
-		);
-		const openB = item(
-			product({ id: 'b', name: 'B', price: 100, fixed_price: false }),
-			2,
-			100
-		);
+		const openA = item(product({ id: 'a', name: 'A', price: 100, fixed_price: false }), 3, 100);
+		const openB = item(product({ id: 'b', name: 'B', price: 100, fixed_price: false }), 2, 100);
 		const next = redistributeOpenPricesToTotal([openA, openB], 497);
 		expect(cartTotal(next)).toBe(497);
 		expect(next.every((i) => i.unitPrice >= 0)).toBe(true);
 	});
 
 	it('raises open prices when the desired total is above current', () => {
-		const open = item(
-			product({ id: 'a', name: 'A', price: 100, fixed_price: false }),
-			2,
-			100
-		);
+		const open = item(product({ id: 'a', name: 'A', price: 100, fixed_price: false }), 2, 100);
 		const next = redistributeOpenPricesToTotal([open], 250);
 		expect(cartTotal(next)).toBe(250);
 		expect(next[0].unitPrice).toBe(125);

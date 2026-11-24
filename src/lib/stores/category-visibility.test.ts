@@ -16,9 +16,7 @@ describe('category-visibility store', () => {
 	it('toggles a category in and out of the grouped set and persists it', () => {
 		toggleCategoryGrouped('drinks');
 		expect(get(groupedCategories).has('drinks')).toBe(true);
-		expect(JSON.parse(localStorage.getItem('pos:grouped-categories') ?? '[]')).toEqual([
-			'drinks'
-		]);
+		expect(JSON.parse(localStorage.getItem('pos:grouped-categories') ?? '[]')).toEqual(['drinks']);
 
 		toggleCategoryGrouped('drinks');
 		expect(get(groupedCategories).has('drinks')).toBe(false);

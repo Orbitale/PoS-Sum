@@ -12,10 +12,7 @@ export interface DashboardCsvLabels {
 	colTransactions: string;
 }
 
-export function buildDashboardCsv(
-	summary: DashboardSummary,
-	labels: DashboardCsvLabels
-): string {
+export function buildDashboardCsv(summary: DashboardSummary, labels: DashboardCsvLabels): string {
 	const lines: string[] = [];
 
 	lines.push(
@@ -27,9 +24,7 @@ export function buildDashboardCsv(
 		])
 	);
 	for (const row of summary.per_product) {
-		const unitPrice = centsToEurosCsv(
-			Math.round(row.total_revenue / row.total_quantity)
-		);
+		const unitPrice = centsToEurosCsv(Math.round(row.total_revenue / row.total_quantity));
 		lines.push(
 			joinCsvRow([
 				quoteCsv(row.product_name),

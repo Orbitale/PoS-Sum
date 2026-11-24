@@ -190,9 +190,11 @@
 		{/if}
 		<div class="d-flex justify-content-between align-items-center mb-2 gap-2">
 			<span>
-			  <span class="fs-5 fw-bold">{$t('order.total')}</span>
+				<span class="fs-5 fw-bold">{$t('order.total')}</span>
 				{#if hasOpenPrice}
-					<small class="fs-6 text-sm text-body-secondary fst-italic">({$t('order.recommendedTotalTooltip')})</small>
+					<small class="fs-6 text-sm text-body-secondary fst-italic">
+						({$t('order.recommendedTotalTooltip')})
+					</small>
 				{/if}
 			</span>
 			<span class="d-flex align-items-center gap-1">

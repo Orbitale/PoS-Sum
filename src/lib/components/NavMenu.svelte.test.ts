@@ -35,10 +35,7 @@ describe('NavMenu', () => {
 		render(NavMenu);
 
 		expect(document.querySelector('.navbar-brand')).toHaveTextContent('Café Test');
-		expect(screen.getByRole('link', { name: 'Produits' })).toHaveAttribute(
-			'aria-current',
-			'page'
-		);
+		expect(screen.getByRole('link', { name: 'Produits' })).toHaveAttribute('aria-current', 'page');
 		expect(screen.getByRole('link', { name: 'Point de vente' })).toHaveAttribute('href', '/');
 		expect(screen.getByRole('link', { name: 'Commandes' })).toHaveAttribute('href', '/orders');
 	});

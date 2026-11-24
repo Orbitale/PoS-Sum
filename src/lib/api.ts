@@ -15,7 +15,9 @@ export async function api_call<T = void>(
 			return invoke<T>(command, params);
 		case 'web':
 			throw new Error('Web backend not yet implemented');
-		case 'static':
-			throw new Error('Static backend not yet implemented');
+		case 'static': {
+			const browserBackend = await import('#lib/backend-browser/index.ts');
+			return browserBackend.invoke<T>(command, params);
+		}
 	}
 }
