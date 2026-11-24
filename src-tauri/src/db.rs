@@ -1,7 +1,10 @@
 use rusqlite::Connection;
+use std::path::Path;
 use std::sync::Mutex;
 use tauri::AppHandle;
 use tauri::Manager;
+
+pub const DB_FILE_NAME: &str = "pos_sum.db";
 
 pub struct DbState {
     pub conn: Mutex<Connection>,
@@ -85,9 +88,11 @@ pub fn init_db(app_handle: &AppHandle) -> Result<DbState, String> {
     std::fs::create_dir_all(&data_dir)
         .map_err(|e| format!("Failed to create app data dir: {e}"))?;
 
-    let db_path = data_dir.join("pos_sum.db");
+    open_db(&data_dir.join(DB_FILE_NAME))
+}
 
-    let mut conn = Connection::open(&db_path)
+pub fn open_db(db_path: &Path) -> Result<DbState, String> {
+    let mut conn = Connection::open(db_path)
         .map_err(|e| format!("Failed to open database at {}: {e}", db_path.display()))?;
 
     conn.execute_batch("PRAGMA journal_mode=WAL;")

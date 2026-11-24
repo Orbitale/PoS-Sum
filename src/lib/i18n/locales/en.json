@@ -220,6 +220,32 @@
 		"datasetSnackbar": "Snackbar",
 		"datasetClothing": "Clothing shop (open prices)"
 	},
+	"saves": {
+		"open": "Saves",
+		"openDirectory": "Open folder",
+		"openDirectoryError": "Failed to open folder: {error}",
+		"title": "Database saves",
+		"loading": "Loading saves...",
+		"empty": "No saves yet.",
+		"loadError": "Failed to load saves: {error}",
+		"restore": "Restore this database",
+		"customName": "Custom name (optional)",
+		"customNamePlaceholder": "e.g. End of day",
+		"fileName": "File name:",
+		"datePattern": "YYYY-MM-DD_HH_MM_SS",
+		"close": "Close",
+		"save": "Save current database",
+		"saving": "Saving...",
+		"saveError": "Save failed: {error}",
+		"restoreTitle": "Restore a save",
+		"restoreConfirm": "The current database will be replaced by \"{fileName}\". Do you want to create a backup of the current state before restoring?",
+		"backupAndRestore": "Back up, then restore",
+		"restoreWithoutBackup": "Restore without backup",
+		"cancel": "Cancel",
+		"restoring": "Restoring...",
+		"restoreError": "Restore failed: {error}",
+		"backupLabel": "before restore"
+	},
 	"languages": {
 		"fr": "Français",
 		"en": "English"

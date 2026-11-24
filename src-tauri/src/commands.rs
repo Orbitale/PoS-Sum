@@ -1,6 +1,10 @@
+use chrono::NaiveDateTime;
+use rusqlite::backup::{Backup, StepResult};
 use rusqlite::params;
 use rusqlite::Connection;
-use tauri::State;
+use std::path::Path;
+use tauri::{AppHandle, State};
+use tauri_plugin_opener::OpenerExt;
 use uuid::Uuid;
 
 use crate::db::DbState;
@@ -587,6 +591,117 @@ fn reset_sales_inner(state: &DbState) -> Result<(), String> {
     Ok(())
 }
 
+fn saves_dir(db: &DbState) -> Result<&Path, String> {
+    match Path::new(&db.db_path).parent() {
+        Some(dir) if db.db_path != ":memory:" => Ok(dir),
+        _ => Err("Saves are only available for database files".to_string()),
+    }
+}
+
+fn list_saves(dir: &Path) -> Result<Vec<String>, String> {
+    let mut saves: Vec<String> = std::fs::read_dir(dir)
+        .map_err(|e| format!("Failed to list saves: {e}"))?
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.path().is_file())
+        .filter_map(|entry| entry.file_name().into_string().ok())
+        .filter(|name| {
+            name != crate::db::DB_FILE_NAME && name.starts_with("pos_sum") && name.ends_with(".db")
+        })
+        .collect();
+    saves.sort();
+    Ok(saves)
+}
+
+fn save_file_name(date: NaiveDateTime, label: &str) -> Result<String, String> {
+    let date = date.format("%Y-%m-%d_%H_%M_%S");
+    if label.is_empty() {
+        return Ok(format!("pos_sum_{date}.db"));
+    }
+
+    let is_word = |word: &str| {
+        !word.is_empty() && word.bytes().all(|b| matches!(b, b'a'..=b'z' | b'0'..=b'9'))
+    };
+    if !label.split('-').all(is_word) {
+        return Err(format!("Invalid save name: {label}"));
+    }
+
+    Ok(format!("pos_sum_{date}_{label}.db"))
+}
+
+fn remove_database_files(path: &str) {
+    for suffix in ["", "-journal", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
+}
+
+fn restore_from_copy(
+    conn: &mut Connection,
+    save_path: &Path,
+    copy_path: &str,
+) -> Result<(), String> {
+    std::fs::copy(save_path, copy_path).map_err(|e| format!("Failed to copy save: {e}"))?;
+    let mut copy = Connection::open(copy_path).map_err(|e| format!("Failed to open save: {e}"))?;
+
+    // Every PoS-Sum database has at least its first migration applied.
+    let is_valid = copy
+        .query_row("PRAGMA quick_check", [], |row| row.get::<_, String>(0))
+        .is_ok_and(|check| check == "ok")
+        && copy
+            .query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0))
+            .is_ok_and(|version| version > 0);
+    if !is_valid {
+        return Err("Invalid save: the file is corrupted or is not a PoS-Sum database".to_string());
+    }
+
+    copy.execute_batch("PRAGMA foreign_keys=ON;")
+        .map_err(|e| format!("Failed to enable foreign keys: {e}"))?;
+    rusqlite_migration::Migrations::new(crate::db::migrations())
+        .to_latest(&mut copy)
+        .map_err(|e| format!("Migration error: {e}"))?;
+
+    let backup = Backup::new(&copy, conn).map_err(|e| format!("Restore error: {e}"))?;
+    match backup.step(-1).map_err(|e| format!("Restore error: {e}"))? {
+        StepResult::Done => Ok(()),
+        _ => Err("Restore error: the database is busy".to_string()),
+    }
+}
+
+pub(crate) fn list_database_saves_inner(db: &DbState) -> Result<Vec<String>, String> {
+    list_saves(saves_dir(db)?)
+}
+
+pub(crate) fn create_database_save_inner(
+    db: &DbState,
+    label: String,
+    date: NaiveDateTime,
+) -> Result<String, String> {
+    let file_name = save_file_name(date, &label)?;
+    let save_path = saves_dir(db)?.join(&file_name);
+    let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
+
+    conn.execute("VACUUM INTO ?1", params![save_path.to_string_lossy()])
+        .map_err(|e| format!("Failed to save database: {e}"))?;
+
+    Ok(file_name)
+}
+
+pub(crate) fn restore_database_save_inner(db: &DbState, file_name: String) -> Result<(), String> {
+    let dir = saves_dir(db)?;
+    if !list_saves(dir)?.contains(&file_name) {
+        return Err(format!("Save not found: {file_name}"));
+    }
+    let mut conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
+
+    // Migrations run on a copy, so the save is never modified and the current database is only
+    // replaced by a valid, up-to-date one. Leftovers of an interrupted restore are removed first:
+    // SQLite would replay their journal into the new copy.
+    let copy_path = format!("{}.restoring", db.db_path);
+    remove_database_files(&copy_path);
+    let result = restore_from_copy(&mut conn, &dir.join(&file_name), &copy_path);
+    remove_database_files(&copy_path);
+    result
+}
+
 #[tauri::command]
 pub fn list_configuration(state: State<'_, DbState>) -> Result<Vec<ConfigurationEntry>, String> {
     list_configuration_inner(&state)
@@ -696,6 +811,28 @@ pub fn reset_sales(state: State<'_, DbState>) -> Result<(), String> {
 #[tauri::command]
 pub fn get_db_path(state: State<'_, DbState>) -> String {
     state.db_path.clone()
+}
+
+#[tauri::command]
+pub fn list_database_saves(state: State<'_, DbState>) -> Result<Vec<String>, String> {
+    list_database_saves_inner(&state)
+}
+
+#[tauri::command]
+pub fn create_database_save(state: State<'_, DbState>, label: String) -> Result<String, String> {
+    create_database_save_inner(&state, label, chrono::Local::now().naive_local())
+}
+
+#[tauri::command]
+pub fn restore_database_save(state: State<'_, DbState>, file_name: String) -> Result<(), String> {
+    restore_database_save_inner(&state, file_name)
+}
+
+#[tauri::command]
+pub fn open_database_directory(app: AppHandle, state: State<'_, DbState>) -> Result<(), String> {
+    app.opener()
+        .open_path(saves_dir(&state)?.to_string_lossy(), None::<&str>)
+        .map_err(|e| format!("Failed to open the database directory: {e}"))
 }
 
 #[tauri::command]
@@ -1193,5 +1330,218 @@ mod tests {
         assert!(entries.iter().any(|e| e.id == "shop_name"));
         let shop = entries.iter().find(|e| e.id == "shop_name").unwrap();
         assert_eq!(shop.value, "");
+    }
+
+    struct TempDir(std::path::PathBuf);
+
+    impl TempDir {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!("pos_sum_test_{}", Uuid::new_v4()));
+            std::fs::create_dir_all(&path).unwrap();
+            TempDir(path)
+        }
+
+        fn open_db(&self) -> DbState {
+            crate::db::open_db(&self.0.join(crate::db::DB_FILE_NAME)).unwrap()
+        }
+    }
+
+    impl Drop for TempDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn date(day: u32, hour: u32, minute: u32, second: u32) -> NaiveDateTime {
+        chrono::NaiveDate::from_ymd_opt(2026, 11, day)
+            .unwrap()
+            .and_hms_opt(hour, minute, second)
+            .unwrap()
+    }
+
+    fn product_names(db: &DbState) -> Vec<String> {
+        list_products_inner(db)
+            .unwrap()
+            .into_iter()
+            .map(|p| p.name)
+            .collect()
+    }
+
+    #[test]
+    fn save_file_name_contains_the_date_and_the_label() {
+        assert_eq!(
+            save_file_name(date(24, 9, 5, 3), "").unwrap(),
+            "pos_sum_2026-11-24_09_05_03.db"
+        );
+        assert_eq!(
+            save_file_name(date(24, 9, 5, 3), "end-of-day-2").unwrap(),
+            "pos_sum_2026-11-24_09_05_03_end-of-day-2.db"
+        );
+    }
+
+    #[test]
+    fn save_file_name_rejects_labels_that_are_not_urlized() {
+        for label in [
+            "../escape",
+            "a/b",
+            "a\\b",
+            "End",
+            "a b",
+            "a--b",
+            "-a",
+            "a-",
+            "journée",
+        ] {
+            let result = save_file_name(date(24, 9, 5, 3), label);
+            assert_eq!(result.unwrap_err(), format!("Invalid save name: {label}"));
+        }
+    }
+
+    #[test]
+    fn database_saves_are_listed_alphabetically() {
+        let dir = TempDir::new();
+        let db = dir.open_db();
+        create_database_save_inner(&db, "z-last".to_string(), date(24, 14, 0, 0)).unwrap();
+        create_database_save_inner(&db, String::new(), date(23, 18, 30, 0)).unwrap();
+        create_database_save_inner(&db, "a-first".to_string(), date(24, 14, 0, 0)).unwrap();
+        std::fs::write(dir.0.join("notes.txt"), "").unwrap();
+        std::fs::write(dir.0.join("other.db"), "").unwrap();
+        std::fs::create_dir(dir.0.join("pos_sum_folder.db")).unwrap();
+
+        assert_eq!(
+            list_database_saves_inner(&db).unwrap(),
+            [
+                "pos_sum_2026-11-23_18_30_00.db",
+                "pos_sum_2026-11-24_14_00_00_a-first.db",
+                "pos_sum_2026-11-24_14_00_00_z-last.db",
+            ]
+        );
+    }
+
+    #[test]
+    fn create_database_save_copies_the_current_database() {
+        let dir = TempDir::new();
+        let db = dir.open_db();
+        make_product(&db, "Cola", 150, "drinks");
+
+        let file_name =
+            create_database_save_inner(&db, "cola".to_string(), date(24, 14, 29, 3)).unwrap();
+
+        assert_eq!(file_name, "pos_sum_2026-11-24_14_29_03_cola.db");
+        let save = Connection::open_with_flags(
+            dir.0.join(&file_name),
+            rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+        )
+        .unwrap();
+        let name: String = save
+            .query_row("SELECT name FROM products", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(name, "Cola");
+    }
+
+    #[test]
+    fn create_database_save_never_overwrites_a_save() {
+        let dir = TempDir::new();
+        let db = dir.open_db();
+        create_database_save_inner(&db, String::new(), date(24, 14, 29, 3)).unwrap();
+
+        let result = create_database_save_inner(&db, String::new(), date(24, 14, 29, 3));
+
+        assert!(result.unwrap_err().contains("already exists"));
+    }
+
+    #[test]
+    fn restore_database_save_replaces_the_current_database() {
+        let dir = TempDir::new();
+        let db = dir.open_db();
+        make_product(&db, "Cola", 150, "drinks");
+        let file_name =
+            create_database_save_inner(&db, String::new(), date(24, 14, 29, 3)).unwrap();
+        make_product(&db, "Water", 100, "drinks");
+
+        restore_database_save_inner(&db, file_name).unwrap();
+
+        assert_eq!(product_names(&db), ["Cola"]);
+        let journal_mode: String = db
+            .conn
+            .lock()
+            .unwrap()
+            .query_row("PRAGMA journal_mode", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(journal_mode, "wal");
+        drop(db);
+        assert_eq!(product_names(&dir.open_db()), ["Cola"]);
+        let leftovers = std::fs::read_dir(&dir.0)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+            .filter(|name| name.contains("restoring"))
+            .count();
+        assert_eq!(leftovers, 0);
+    }
+
+    #[test]
+    fn restore_database_save_only_accepts_saves_of_the_database_directory() {
+        let dir = TempDir::new();
+        let data_dir = dir.0.join("data");
+        std::fs::create_dir(&data_dir).unwrap();
+        let db = crate::db::open_db(&data_dir.join(crate::db::DB_FILE_NAME)).unwrap();
+        let save = create_database_save_inner(&db, String::new(), date(24, 14, 29, 3)).unwrap();
+        std::fs::copy(data_dir.join(&save), dir.0.join("pos_sum_outside.db")).unwrap();
+        std::fs::copy(data_dir.join(&save), data_dir.join("other.db")).unwrap();
+
+        for file_name in [
+            "pos_sum.db",
+            "pos_sum_missing.db",
+            "other.db",
+            "../pos_sum_outside.db",
+        ] {
+            let result = restore_database_save_inner(&db, file_name.to_string());
+            assert_eq!(result.unwrap_err(), format!("Save not found: {file_name}"));
+        }
+    }
+
+    #[test]
+    fn restore_database_save_rejects_invalid_files() {
+        let dir = TempDir::new();
+        let db = dir.open_db();
+        make_product(&db, "Cola", 150, "drinks");
+        std::fs::write(dir.0.join("pos_sum_text.db"), "not a database").unwrap();
+        std::fs::write(dir.0.join("pos_sum_empty.db"), "").unwrap();
+
+        for file_name in ["pos_sum_text.db", "pos_sum_empty.db"] {
+            let result = restore_database_save_inner(&db, file_name.to_string());
+            assert!(result.unwrap_err().starts_with("Invalid save"));
+        }
+        assert_eq!(product_names(&db), ["Cola"]);
+    }
+
+    #[test]
+    fn restore_database_save_migrates_older_saves_without_modifying_them() {
+        let dir = TempDir::new();
+        let db = dir.open_db();
+        let save_path = dir.0.join("pos_sum_old.db");
+        let mut old = Connection::open(&save_path).unwrap();
+        rusqlite_migration::Migrations::new(crate::db::migrations().into_iter().take(1).collect())
+            .to_latest(&mut old)
+            .unwrap();
+        old.execute(
+            "INSERT INTO orders (id, created_at, total, payment_method)
+             VALUES ('o1', '2026-01-01T10:00:00Z', 300, 'cash')",
+            [],
+        )
+        .unwrap();
+        drop(old);
+        let saved_bytes = std::fs::read(&save_path).unwrap();
+
+        restore_database_save_inner(&db, "pos_sum_old.db".to_string()).unwrap();
+
+        let orders = list_orders_inner(&db).unwrap();
+        assert_eq!(orders.len(), 1);
+        assert_eq!(orders[0].order.weight, None);
+        assert!(list_configuration_inner(&db)
+            .unwrap()
+            .iter()
+            .any(|e| e.id == "theme"));
+        assert_eq!(std::fs::read(&save_path).unwrap(), saved_bytes);
     }
 }

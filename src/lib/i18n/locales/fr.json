@@ -220,6 +220,32 @@
 		"datasetSnackbar": "Snack-bar",
 		"datasetClothing": "Boutique de vêtements (prix libres)"
 	},
+	"saves": {
+		"open": "Sauvegardes",
+		"openDirectory": "Ouvrir le dossier",
+		"openDirectoryError": "Échec de l'ouverture du dossier : {error}",
+		"title": "Sauvegardes de la base de données",
+		"loading": "Chargement des sauvegardes...",
+		"empty": "Aucune sauvegarde pour le moment.",
+		"loadError": "Échec du chargement des sauvegardes : {error}",
+		"restore": "Restaurer cette base de données",
+		"customName": "Nom personnalisé (optionnel)",
+		"customNamePlaceholder": "ex. Fin de journée",
+		"fileName": "Nom du fichier :",
+		"datePattern": "AAAA-MM-JJ_HH_MM_SS",
+		"close": "Fermer",
+		"save": "Sauvegarder la base de données actuelle",
+		"saving": "Sauvegarde...",
+		"saveError": "Échec de la sauvegarde : {error}",
+		"restoreTitle": "Restaurer une sauvegarde",
+		"restoreConfirm": "La base de données actuelle va être remplacée par \"{fileName}\". Voulez-vous créer une sauvegarde de l'état actuel avant la restauration ?",
+		"backupAndRestore": "Sauvegarder, puis restaurer",
+		"restoreWithoutBackup": "Restaurer sans sauvegarder",
+		"cancel": "Annuler",
+		"restoring": "Restauration...",
+		"restoreError": "Échec de la restauration : {error}",
+		"backupLabel": "avant restauration"
+	},
 	"languages": {
 		"fr": "Français",
 		"en": "English"

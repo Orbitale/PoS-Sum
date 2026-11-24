@@ -42,6 +42,10 @@ pub fn run() {
             reset_database,
             reset_sales,
             get_db_path,
+            list_database_saves,
+            create_database_save,
+            restore_database_save,
+            open_database_directory,
             get_app_version,
         ])
         .run(tauri::generate_context!())

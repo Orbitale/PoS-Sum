@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { api_call } from '#lib/api.ts';
+	import { api_call, APP_TARGET } from '#lib/api.ts';
 	import { confirm } from '#lib/confirm.svelte.ts';
+	import DatabaseSavesModal from '#lib/components/DatabaseSavesModal.svelte';
 	import type { AppVersion, Category } from '#lib/types.ts';
 	import { t, locale, availableLocales } from '#lib/i18n/index.ts';
 	import {
@@ -23,6 +24,7 @@
 	let isResetting = $state(false);
 	let isResettingSales = $state(false);
 	let isLoadingDefaults = $state(false);
+	let isSavesOpen = $state(false);
 	let categories = $state<Category[]>([]);
 	let shopNameInput = $state('');
 	let selectedDataset = $state<'snackbar' | 'clothing'>('snackbar');
@@ -66,6 +68,14 @@
 	async function changeTheme(value: 'light' | 'dark') {
 		document.body.setAttribute('data-bs-theme', value);
 		await setConfigValue('theme', value);
+	}
+
+	async function openDatabaseDirectory() {
+		try {
+			await api_call('open_database_directory');
+		} catch (e) {
+			alert($t('saves.openDirectoryError', { error: String(e) }));
+		}
 	}
 
 	async function loadDefaults() {
@@ -203,6 +213,20 @@
 				<p class="m-0 small text-body-secondary">
 					<span class="fw-semibold">{$t('dashboard.dbPath')} :</span>
 					<code class="bg-body-secondary px-1 rounded-1 small">{dbPath}</code>
+					<button
+						class="btn btn-outline-primary btn-sm py-0 ms-1 fw-semibold"
+						onclick={() => (isSavesOpen = true)}
+					>
+						{$t('saves.open')}
+					</button>
+					{#if APP_TARGET !== 'static'}
+						<button
+							class="btn btn-outline-primary btn-sm py-0 ms-1 fw-semibold"
+							onclick={openDatabaseDirectory}
+						>
+							{$t('saves.openDirectory')}
+						</button>
+					{/if}
 				</p>
 			{/if}
 		</section>
@@ -302,3 +326,10 @@
 		</div>
 	</section>
 </div>
+
+{#if isSavesOpen}
+	<DatabaseSavesModal
+		onClose={() => (isSavesOpen = false)}
+		onRestored={() => window.location.reload()}
+	/>
+{/if}
