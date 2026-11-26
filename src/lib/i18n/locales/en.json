@@ -198,7 +198,6 @@
 		"loadError": "Failed to load configuration: {error}",
 		"application": "Application",
 		"shopName": "Shop name",
-		"shopNamePlaceholder": "Displayed in the navigation bar",
 		"companyInformation": "Company / Shop",
 		"companyAddress": "Company details / address",
 		"save": "Save",

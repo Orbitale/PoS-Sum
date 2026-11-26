@@ -152,13 +152,14 @@
 		<div class="card-body">
 			<div class="row">
 				<div class="col-sm-6">
-					<label for="shopNameInput" class="form-label">{$t('configuration.shopName')}</label>
+					<label for="shopNameInput" class="form-label">
+            {$t('configuration.shopName')}
+          </label>
 					<input
 						class="form-control mb-3"
 						id="shopNameInput"
 						type="text"
 						bind:value={shopNameInput}
-						placeholder={$t('configuration.shopNamePlaceholder')}
 					/>
 
 					<label for="companyAddressInput" class="form-label">
@@ -204,7 +205,7 @@
 					<p class="small text-muted mb-2">{$t('configuration.categoryGroupingHint')}</p>
 
 					{#if categories.length === 0}
-						<p class="small text-muted mb-2">{$t('configuration.noCategoriesYet')}</p>
+						<p class="small text-muted fst-italic mb-2">{$t('configuration.noCategoriesYet')}</p>
 					{:else}
 						<label
 							class="d-flex align-items-center gap-2 py-1 fw-semibold border-bottom pb-2 mb-1"
@@ -232,10 +233,12 @@
 							<label
 								class="d-flex align-items-center gap-2 py-1"
 								style="cursor: pointer; font-size: 0.9rem"
+                for="regroupCategory{cat.id}"
 							>
 								<input
 									class="form-check-input"
 									type="checkbox"
+									id="regroupCategory{cat.id}"
 									checked={$groupedCategories.has(cat.id)}
 									onchange={() => toggleCategoryGrouped(cat.id)}
 								/>

@@ -199,7 +199,6 @@
 		"application": "Application",
 		"redZone": "Configuration avancée",
 		"shopName": "Nom de la boutique",
-		"shopNamePlaceholder": "Affiché dans la barre de navigation",
 		"companyInformation": "Entreprise / Boutique",
 		"companyAddress": "Coordonnées / adresse de l'entreprise",
 		"save": "Enregistrer",
