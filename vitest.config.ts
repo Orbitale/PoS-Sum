@@ -7,9 +7,11 @@ export default mergeConfig(
 	defineConfig({
 		plugins: [svelteTesting()],
 		test: {
+			clearMocks: true,
 			projects: [
 				{
 					extends: true,
+					clearScreen: true,
 					test: {
 						name: 'unit',
 						environment: 'node',
@@ -23,6 +25,7 @@ export default mergeConfig(
 				},
 				{
 					extends: true,
+					clearScreen: true,
 					test: {
 						name: 'component',
 						environment: 'jsdom',

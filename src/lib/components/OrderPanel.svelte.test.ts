@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/svelte';
+import { cleanup, render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CartItem, Product } from '#lib/types.ts';
@@ -32,6 +32,7 @@ const noopHandlers = {
 
 describe('OrderPanel', () => {
 	beforeEach(() => {
+		cleanup();
 		appConfig.set({ order_weight_enabled: '0' });
 		vi.stubGlobal('bootstrap', undefined);
 		for (const fn of Object.values(noopHandlers)) {
