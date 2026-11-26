@@ -887,6 +887,7 @@ mod tests {
         let entries = list_configuration_inner(&db).unwrap();
         let ids: Vec<_> = entries.iter().map(|e| e.id.as_str()).collect();
         assert!(ids.contains(&"shop_name"));
+        assert!(ids.contains(&"company_details"));
         assert!(ids.contains(&"order_weight_enabled"));
         assert!(ids.contains(&"custom_product_enabled"));
         assert!(ids.contains(&"shop_language"));

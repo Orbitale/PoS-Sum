@@ -21,6 +21,7 @@ pub fn migrations() -> Vec<rusqlite_migration::M<'static>> {
 
 const CONFIG_DEFAULTS: &[(&str, &str, &str)] = &[
     ("shop_name", "Shop name", ""),
+    ("company_details", "Company details / address", ""),
     ("order_weight_enabled", "Activate weight field in Order page", "0"),
     (
         "custom_product_enabled",

@@ -69,6 +69,7 @@ describe('configuration', () => {
 	it('provides the default entries, sorted by id', async () => {
 		const entries = await invoke<ConfigurationEntry[]>('list_configuration');
 		expect(entries.map((entry) => entry.id)).toEqual([
+			'company_details',
 			'custom_product_enabled',
 			'order_weight_enabled',
 			'shop_language',
@@ -410,7 +411,7 @@ describe('datasets and resets', () => {
 		await expect(invoke('list_categories')).resolves.toEqual([]);
 		await expect(invoke('list_orders')).resolves.toEqual([]);
 		const entries = await invoke<ConfigurationEntry[]>('list_configuration');
-		expect(entries).toHaveLength(5);
+		expect(entries).toHaveLength(6);
 		expect(entries.find((entry) => entry.id === 'shop_name')?.value).toBe('');
 	});
 });

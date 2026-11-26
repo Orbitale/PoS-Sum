@@ -15,6 +15,7 @@ function entriesToMap(entries: ConfigurationEntry[]): AppConfigMap {
 export const appConfig = writable<AppConfigMap>({});
 
 export const shopName = derived(appConfig, ($c) => $c.shop_name ?? '');
+export const companyAddress = derived(appConfig, ($c) => $c.company_details ?? '');
 export const orderWeightEnabled = derived(
 	appConfig,
 	($c) => ($c.order_weight_enabled ?? '0') === '1'

@@ -8,6 +8,7 @@ vi.mock('#lib/api.ts', () => ({
 import { api_call } from '#lib/api.ts';
 import {
 	appConfig,
+	companyAddress,
 	customProductEnabled,
 	loadAppConfig,
 	orderWeightEnabled,
@@ -24,18 +25,21 @@ describe('app-config store', () => {
 
 	it('derives config flags and defaults', () => {
 		expect(get(shopName)).toBe('');
+		expect(get(companyAddress)).toBe('');
 		expect(get(orderWeightEnabled)).toBe(false);
 		expect(get(customProductEnabled)).toBe(false);
 		expect(get(theme)).toBe('light');
 
 		appConfig.set({
 			shop_name: 'Café Test',
+			company_details: 'Café Test SARL\n1 rue de la Paix\n75002 Paris',
 			order_weight_enabled: '1',
 			custom_product_enabled: '1',
 			theme: 'dark'
 		});
 
 		expect(get(shopName)).toBe('Café Test');
+		expect(get(companyAddress)).toBe('Café Test SARL\n1 rue de la Paix\n75002 Paris');
 		expect(get(orderWeightEnabled)).toBe(true);
 		expect(get(customProductEnabled)).toBe(true);
 		expect(get(theme)).toBe('dark');

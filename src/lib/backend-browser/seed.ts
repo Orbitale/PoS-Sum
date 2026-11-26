@@ -2,6 +2,7 @@ import type { Category, ConfigurationEntry, Product } from '#lib/types.ts';
 
 export const CONFIGURATION_DEFAULTS: readonly ConfigurationEntry[] = [
 	{ id: 'shop_name', name: 'Shop name', value: '' },
+	{ id: 'company_details', name: 'Company details / address', value: '' },
 	{ id: 'order_weight_enabled', name: 'Activate weight field in Order page', value: '0' },
 	{ id: 'custom_product_enabled', name: 'Allow adding custom product on-the-fly', value: '0' },
 	{ id: 'shop_language', name: 'Shop language', value: 'fr' },
