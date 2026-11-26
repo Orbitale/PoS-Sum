@@ -40,7 +40,7 @@ describe('CheckoutModal', () => {
 
 		await user.click(screen.getByRole('button', { name: /Carte/ }));
 		await user.click(screen.getByRole('button', { name: 'Confirmer' }));
-		expect(onConfirm).toHaveBeenCalledWith('card');
+		expect(onConfirm).toHaveBeenCalledWith('card', '');
 
 		unmount();
 		onConfirm.mockReset();
@@ -49,7 +49,7 @@ describe('CheckoutModal', () => {
 		});
 		await user.click(screen.getByRole('button', { name: /Chèque/ }));
 		await user.click(screen.getByRole('button', { name: 'Confirmer' }));
-		expect(onConfirm).toHaveBeenCalledWith('check');
+		expect(onConfirm).toHaveBeenCalledWith('check', '');
 	});
 
 	it('treats empty cash received as exact payment of the total', async () => {
@@ -61,7 +61,20 @@ describe('CheckoutModal', () => {
 
 		await user.click(screen.getByRole('button', { name: /Espèces/ }));
 		await user.click(screen.getByRole('button', { name: 'Confirmer' }));
-		expect(onConfirm).toHaveBeenCalledWith('cash');
+		expect(onConfirm).toHaveBeenCalledWith('cash', '');
+	});
+
+	it('passes customer details on confirm', async () => {
+		const user = userEvent.setup();
+		const onConfirm = vi.fn();
+		render(CheckoutModal, {
+			props: { items, total: 300, onConfirm, onCancel: vi.fn() }
+		});
+
+		await user.type(screen.getByLabelText('Coordonnées du client'), 'Jean Dupont');
+		await user.click(screen.getByRole('button', { name: /Carte/ }));
+		await user.click(screen.getByRole('button', { name: 'Confirmer' }));
+		expect(onConfirm).toHaveBeenCalledWith('card', 'Jean Dupont');
 	});
 
 	it('blocks underpaid cash and accepts enough cash', async () => {
@@ -81,7 +94,7 @@ describe('CheckoutModal', () => {
 		await user.type(cashInput, '5,00');
 		expect(screen.getByText(/Monnaie/)).toBeInTheDocument();
 		await user.click(screen.getByRole('button', { name: 'Confirmer' }));
-		expect(onConfirm).toHaveBeenCalledWith('cash');
+		expect(onConfirm).toHaveBeenCalledWith('cash', '');
 	});
 
 	it('cancels checkout without confirming payment', async () => {

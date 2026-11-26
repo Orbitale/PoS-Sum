@@ -52,7 +52,8 @@
 		"cancel": "Annuler",
 		"confirm": "Confirmer",
 		"numberOfProducts": "Nombre de produits",
-		"submitting": "Envoi..."
+		"submitting": "Envoi...",
+		"customerDetails": "Coordonnées du client"
 	},
 	"productForm": {
 		"editTitle": "Modifier le produit",
@@ -155,7 +156,25 @@
 		"csvColWeight": "Poids (Kg)",
 		"csvColComment": "Commentaire",
 		"weight": "Poids",
-		"comment": "Commentaire"
+		"comment": "Commentaire",
+		"editOrder": "Modifier la commande",
+		"editTitle": "Modifier la commande",
+		"editSave": "Enregistrer",
+		"editSaving": "Enregistrement...",
+		"editCancel": "Annuler",
+		"editError": "Échec de la mise à jour de la commande : {error}",
+		"printInvoice": "Imprimer la facture",
+		"invoice": {
+			"title": "Facture",
+			"orderRef": "Réf. commande",
+			"date": "Date",
+			"payment": "Mode de paiement",
+			"total": "Total",
+			"print": "Imprimer",
+			"close": "Fermer",
+			"customer": "Client",
+			"customerDetails": "Coordonnées du client"
+		}
 	},
 	"dashboard": {
 		"title": "Tableau de bord",

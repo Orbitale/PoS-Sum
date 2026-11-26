@@ -80,8 +80,8 @@
 		cart = redistributeOpenPricesToTotal(cart, desiredTotalCents);
 	}
 
-	async function submitOrder(paymentMethod: PaymentMethod) {
-		const payload = buildCreateOrderPayload(cart, paymentMethod, weight);
+	async function submitOrder(paymentMethod: PaymentMethod, customerDetails: string) {
+		const payload = buildCreateOrderPayload(cart, paymentMethod, weight, customerDetails);
 
 		try {
 			await api_call<OrderWithItems>('create_order', { payload });

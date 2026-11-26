@@ -16,6 +16,7 @@ pub fn migrations() -> Vec<rusqlite_migration::M<'static>> {
         rusqlite_migration::M::up(include_str!("./migrations/0-init.sql")),
         rusqlite_migration::M::up(include_str!("./migrations/1-nonprofits-enhancements.sql")),
         rusqlite_migration::M::up(include_str!("./migrations/2-add-check-payment.sql")),
+        rusqlite_migration::M::up(include_str!("./migrations/3-customer-details.sql")),
     ]
 }
 

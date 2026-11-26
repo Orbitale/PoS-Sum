@@ -1,0 +1,1 @@
+ALTER TABLE orders ADD COLUMN customer_details TEXT NOT NULL DEFAULT '';

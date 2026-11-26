@@ -6,10 +6,21 @@
 	import type { OrderWithItems } from '#lib/types.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
 	import { t } from '#lib/i18n/index.ts';
+	import OrderInvoiceModal from '#lib/components/OrderInvoiceModal.svelte';
+	import OrderEditModal from '#lib/components/OrderEditModal.svelte';
+	import type { UpdateOrderPayload } from '#lib/types.ts';
 
 	let orders = $state<OrderWithItems[]>([]);
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
+	let invoiceOrderId = $state<string | null>(null);
+	let editOrderId = $state<string | null>(null);
+	let editError = $state<string | null>(null);
+
+	let invoiceOrder = $derived(
+		invoiceOrderId ? (orders.find((o) => o.id === invoiceOrderId) ?? null) : null
+	);
+	let editOrder = $derived(editOrderId ? (orders.find((o) => o.id === editOrderId) ?? null) : null);
 
 	onMount(async () => {
 		await loadOrders();
@@ -57,6 +68,17 @@
 		});
 		await downloadCsv('commandes.csv', csv);
 	}
+
+	async function saveOrderDetails(payload: UpdateOrderPayload) {
+		editError = null;
+		try {
+			const updated = await api_call<OrderWithItems>('update_order', { payload });
+			orders = orders.map((order) => (order.id === updated.id ? updated : order));
+			editOrderId = null;
+		} catch (e) {
+			editError = $t('orders.editError', { error: String(e) });
+		}
+	}
 </script>
 
 <div class="mx-auto px-4 pb-4">
@@ -95,6 +117,24 @@
 			{#each orders as order (order.id)}
 				<div class="border rounded-3 overflow-hidden">
 					<div class="d-flex align-items-center gap-3 px-3 py-1 bg-body-secondary border-bottom">
+						<button
+							type="button"
+							class="btn btn-secondary btn-sm text-decoration-none"
+							title={$t('orders.editOrder')}
+							aria-label={$t('orders.editOrder')}
+							onclick={() => (editOrderId = order.id)}
+						>
+							✏️
+						</button>
+						<button
+							type="button"
+							class="btn btn-secondary btn-sm text-decoration-none"
+							title={$t('orders.printInvoice')}
+							aria-label={$t('orders.printInvoice')}
+							onclick={() => (invoiceOrderId = order.id)}
+						>
+							🖨️
+						</button>
 						<span class="small fw-semibold">{formatDateTime(order.created_at)}</span>
 						<span
 							class="badge rounded-pill {order.payment_method === 'cash'
@@ -148,3 +188,23 @@
 		</div>
 	{/if}
 </div>
+
+{#if editError}
+	<div class="position-fixed bottom-0 start-50 translate-middle-x mb-3 alert alert-danger shadow">
+		{editError}
+	</div>
+{/if}
+
+{#if editOrder}
+	{@const orderToEdit = editOrder}
+	<OrderEditModal
+		order={orderToEdit}
+		onConfirm={saveOrderDetails}
+		onCancel={() => (editOrderId = null)}
+	/>
+{/if}
+
+{#if invoiceOrder}
+	{@const orderForInvoice = invoiceOrder}
+	<OrderInvoiceModal order={orderForInvoice} onClose={() => (invoiceOrderId = null)} />
+{/if}

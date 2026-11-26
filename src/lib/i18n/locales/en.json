@@ -52,7 +52,8 @@
 		"cancel": "Cancel",
 		"confirm": "Confirm",
 		"numberOfProducts": "Number of products",
-		"submitting": "Submitting..."
+		"submitting": "Submitting...",
+		"customerDetails": "Customer details"
 	},
 	"productForm": {
 		"editTitle": "Edit Product",
@@ -155,7 +156,25 @@
 		"csvColWeight": "Weight (Kg)",
 		"csvColComment": "Comment",
 		"weight": "Weight",
-		"comment": "Comment"
+		"comment": "Comment",
+		"editOrder": "Edit order",
+		"editTitle": "Edit order",
+		"editSave": "Save",
+		"editSaving": "Saving...",
+		"editCancel": "Cancel",
+		"editError": "Failed to update order: {error}",
+		"printInvoice": "Print invoice",
+		"invoice": {
+			"title": "Invoice",
+			"orderRef": "Order ref.",
+			"date": "Date",
+			"payment": "Payment method",
+			"total": "Total",
+			"print": "Print",
+			"close": "Close",
+			"customer": "Customer",
+			"customerDetails": "Customer details"
+		}
 	},
 	"dashboard": {
 		"title": "Dashboard",

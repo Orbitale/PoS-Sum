@@ -40,6 +40,7 @@ describe('buildOrdersCsv', () => {
 				total: 300,
 				payment_method: 'cash',
 				weight: 1.2,
+				customer_details: '',
 				items: [
 					{
 						id: 'i1',
@@ -78,6 +79,7 @@ describe('buildOrdersCsv', () => {
 				total: 150,
 				payment_method: 'cash',
 				weight: null,
+				customer_details: '',
 				items: [
 					{
 						id: 'i1',
@@ -97,6 +99,7 @@ describe('buildOrdersCsv', () => {
 				total: 200,
 				payment_method: 'card',
 				weight: null,
+				customer_details: '',
 				items: [
 					{
 						id: 'i2',

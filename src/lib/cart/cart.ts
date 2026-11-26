@@ -125,7 +125,8 @@ export function redistributeOpenPricesToTotal(
 export function buildCreateOrderPayload(
 	items: CartItem[],
 	paymentMethod: PaymentMethod,
-	weightInput: string
+	weightInput: string,
+	customerDetails = ''
 ): CreateOrderPayload {
 	return {
 		items: items.map((i) => ({
@@ -136,6 +137,7 @@ export function buildCreateOrderPayload(
 			comment: i.comment
 		})),
 		payment_method: paymentMethod,
-		weight: parseOptionalFloat(weightInput)
+		weight: parseOptionalFloat(weightInput),
+		customer_details: customerDetails.trim()
 	};
 }

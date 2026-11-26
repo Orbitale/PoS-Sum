@@ -58,10 +58,16 @@ function line(
 function createOrder(
 	items: CreateOrderItemPayload[],
 	paymentMethod: PaymentMethod = 'cash',
-	weight: number | null = null
+	weight: number | null = null,
+	customerDetails = ''
 ): Promise<OrderWithItems> {
 	return invoke<OrderWithItems>('create_order', {
-		payload: { items, payment_method: paymentMethod, weight }
+		payload: {
+			items,
+			payment_method: paymentMethod,
+			weight,
+			customer_details: customerDetails
+		}
 	});
 }
 
@@ -244,6 +250,7 @@ describe('orders', () => {
 			total: 150,
 			payment_method: 'cash',
 			weight: null,
+			customer_details: '',
 			items: [
 				{
 					id: expect.any(String),
@@ -258,6 +265,39 @@ describe('orders', () => {
 			]
 		});
 		await expect(invoke('list_orders')).resolves.toEqual([order]);
+	});
+
+	it('updates order details', async () => {
+		const product = await makeProduct('Tea', 200, 'boissons');
+		const order = await createOrder([line(product, 1)], 'cash', null, 'Alice');
+
+		const updated = await invoke<OrderWithItems>('update_order', {
+			payload: {
+				id: order.id,
+				weight: 2,
+				customer_details: 'Bob Martin'
+			}
+		});
+		expect(updated.payment_method).toBe('cash');
+		expect(updated.weight).toBe(2);
+		expect(updated.customer_details).toBe('Bob Martin');
+
+		const [stored] = await invoke<OrderWithItems[]>('list_orders');
+		expect(stored).toMatchObject({
+			id: order.id,
+			payment_method: 'cash',
+			weight: 2,
+			customer_details: 'Bob Martin'
+		});
+	});
+
+	it('stores customer details on the order', async () => {
+		const product = await makeProduct('Tea', 200, 'boissons');
+		const order = await createOrder([line(product, 1)], 'card', null, 'Alice Martin\nLyon');
+		expect(order.customer_details).toBe('Alice Martin\nLyon');
+
+		const [stored] = await invoke<OrderWithItems[]>('list_orders');
+		expect(stored.customer_details).toBe('Alice Martin\nLyon');
 	});
 
 	it('keeps custom prices, comments, the weight and the order of items', async () => {

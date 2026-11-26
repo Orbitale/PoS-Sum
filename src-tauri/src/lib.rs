@@ -37,6 +37,7 @@ pub fn run() {
             delete_category,
             create_order,
             list_orders,
+            update_order,
             get_dashboard_summary,
             load_default_dataset,
             reset_database,

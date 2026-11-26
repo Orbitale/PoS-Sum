@@ -8,7 +8,7 @@
 	interface Props {
 		items: CartItem[];
 		total: number;
-		onConfirm: (paymentMethod: PaymentMethod) => void;
+		onConfirm: (paymentMethod: PaymentMethod, customerDetails: string) => void;
 		onCancel: () => void;
 	}
 
@@ -16,6 +16,7 @@
 
 	let paymentMethod = $state<PaymentMethod | null>(null);
 	let cashReceived = $state('');
+	let customerDetails = $state('');
 	let isSubmitting = $state(false);
 
 	let numberOfProducts = $derived(items.reduce((acc, item) => acc + item.quantity, 0));
@@ -45,7 +46,7 @@
 			return;
 		}
 		isSubmitting = true;
-		onConfirm(paymentMethod);
+		onConfirm(paymentMethod, customerDetails);
 	}
 </script>
 
@@ -83,6 +84,10 @@
 			</div>
 
 			<div class="checkout-payment">
+				<label class="d-flex flex-column gap-1 fw-semibold mb-3" style="font-size: 0.95rem">
+					{$t('checkout.customerDetails')}
+					<textarea class="form-control" rows="4" bind:value={customerDetails}></textarea>
+				</label>
 				<div class:visible={paymentMethod === 'cash'} class:invisible={paymentMethod !== 'cash'}>
 					<AmountField
 						id="checkout-cash-received"

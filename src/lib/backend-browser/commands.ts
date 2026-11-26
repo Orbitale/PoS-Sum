@@ -6,6 +6,7 @@ import type {
 	CreateCategoryPayload,
 	CreateOrderPayload,
 	CreateProductPayload,
+	UpdateOrderPayload,
 	DashboardSummary,
 	OrderItem,
 	OrderWithItems,
@@ -220,6 +221,7 @@ export async function createOrder(payload: CreateOrderPayload): Promise<OrderWit
 		total: items.reduce((sum, item) => sum + item.total, 0),
 		payment_method: payload.payment_method,
 		weight,
+		customer_details: payload.customer_details?.trim() ?? '',
 		items
 	};
 
@@ -229,10 +231,37 @@ export async function createOrder(payload: CreateOrderPayload): Promise<OrderWit
 	return order;
 }
 
+export async function updateOrder(payload: UpdateOrderPayload): Promise<OrderWithItems> {
+	const weight = payload.weight ?? null;
+	if (weight !== null && (!Number.isFinite(weight) || weight < 0)) {
+		throw new BackendError('Weight must be a non-negative finite number');
+	}
+
+	return withTransaction(['orders'], 'readwrite', async (tx) => {
+		const store = tx.objectStore('orders');
+		const index = store.index('id');
+		const key = await promisify(index.getKey(payload.id));
+		if (key === undefined) {
+			throw new BackendError(`Order not found: ${payload.id}`);
+		}
+		const order = (await promisify(store.get(key))) as OrderWithItems;
+		const updated: OrderWithItems = {
+			...order,
+			weight,
+			customer_details: payload.customer_details.trim()
+		};
+		store.put(updated, key);
+		return updated;
+	});
+}
+
 export async function listOrders(): Promise<OrderWithItems[]> {
 	const orders = await getAll<OrderWithItems>('orders');
 	// Orders come in insertion order: reversing them first puts the latest of a same second first.
-	return orders.reverse().sort((a, b) => compare(b.created_at, a.created_at));
+	return orders
+		.reverse()
+		.sort((a, b) => compare(b.created_at, a.created_at))
+		.map((order) => ({ ...order, customer_details: order.customer_details ?? '' }));
 }
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {

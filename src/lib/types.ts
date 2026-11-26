@@ -42,6 +42,7 @@ export interface Order {
 	total: number;
 	payment_method: PaymentMethod;
 	weight: number | null;
+	customer_details: string;
 }
 
 export interface OrderItem {
@@ -71,6 +72,13 @@ export interface CreateOrderPayload {
 	items: CreateOrderItemPayload[];
 	payment_method: PaymentMethod;
 	weight?: number | null;
+	customer_details?: string;
+}
+
+export interface UpdateOrderPayload {
+	id: string;
+	weight?: number | null;
+	customer_details: string;
 }
 
 export interface CreateProductPayload {

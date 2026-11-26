@@ -112,6 +112,8 @@ pub struct Order {
     pub total: i64,
     pub payment_method: PaymentMethod,
     pub weight: Option<f64>,
+    #[serde(default)]
+    pub customer_details: String,
 }
 
 /// Name and price are copied at sale time, so later catalog changes don't alter past orders.
@@ -141,6 +143,17 @@ pub struct CreateOrderPayload {
     pub payment_method: PaymentMethod,
     #[serde(default)]
     pub weight: Option<f64>,
+    #[serde(default)]
+    pub customer_details: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateOrderPayload {
+    pub id: String,
+    #[serde(default)]
+    pub weight: Option<f64>,
+    #[serde(default)]
+    pub customer_details: String,
 }
 
 #[derive(Debug, Deserialize)]

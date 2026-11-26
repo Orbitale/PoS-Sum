@@ -295,13 +295,14 @@ pub(crate) fn create_order_inner(
         .map_err(|e| format!("Transaction begin error: {e}"))?;
 
     tx.execute(
-        "INSERT INTO orders (id, created_at, total, payment_method, weight) VALUES (?1, ?2, ?3, ?4, ?5)",
+        "INSERT INTO orders (id, created_at, total, payment_method, weight, customer_details) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         params![
             order_id,
             created_at,
             order_total,
             payload.payment_method.as_db_str(),
             payload.weight,
+            payload.customer_details,
         ],
     )
     .map_err(|e| format!("Insert order error: {e}"))?;
@@ -334,6 +335,7 @@ pub(crate) fn create_order_inner(
             total: order_total,
             payment_method: payload.payment_method,
             weight: payload.weight,
+            customer_details: payload.customer_details,
         },
         items: order_items,
     })
@@ -344,7 +346,7 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
 
     let mut order_stmt = conn
         .prepare(
-            "SELECT id, created_at, total, payment_method, weight FROM orders ORDER BY created_at DESC",
+            "SELECT id, created_at, total, payment_method, weight, customer_details FROM orders ORDER BY created_at DESC",
         )
         .map_err(|e| format!("Query error: {e}"))?;
 
@@ -364,6 +366,7 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
                 total: row.get(2)?,
                 payment_method,
                 weight: row.get(4)?,
+                customer_details: row.get(5)?,
             })
         })
         .map_err(|e| format!("Query error: {e}"))?
@@ -413,6 +416,36 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
         .collect();
 
     Ok(result)
+}
+
+pub(crate) fn update_order_inner(
+    db: &DbState,
+    payload: UpdateOrderPayload,
+) -> Result<OrderWithItems, String> {
+    if let Some(weight) = payload.weight {
+        if !weight.is_finite() || weight < 0.0 {
+            return Err("Weight must be a non-negative finite number".to_string());
+        }
+    }
+
+    {
+        let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
+        let rows = conn
+            .execute(
+                "UPDATE orders SET weight = ?1, customer_details = ?2 WHERE id = ?3",
+                params![payload.weight, payload.customer_details, payload.id,],
+            )
+            .map_err(|e| format!("Update order error: {e}"))?;
+
+        if rows == 0 {
+            return Err(format!("Order not found: {}", payload.id));
+        }
+    }
+
+    list_orders_inner(db)?
+        .into_iter()
+        .find(|order| order.order.id == payload.id)
+        .ok_or_else(|| format!("Order not found: {}", payload.id))
 }
 
 pub(crate) fn get_dashboard_summary_inner(db: &DbState) -> Result<DashboardSummary, String> {
@@ -789,6 +822,14 @@ pub fn list_orders(state: State<'_, DbState>) -> Result<Vec<OrderWithItems>, Str
 }
 
 #[tauri::command]
+pub fn update_order(
+    state: State<'_, DbState>,
+    payload: UpdateOrderPayload,
+) -> Result<OrderWithItems, String> {
+    update_order_inner(&state, payload)
+}
+
+#[tauri::command]
 pub fn get_dashboard_summary(state: State<'_, DbState>) -> Result<DashboardSummary, String> {
     get_dashboard_summary_inner(&state)
 }
@@ -1031,6 +1072,7 @@ mod tests {
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: None,
+                customer_details: String::new(),
             },
         )
         .unwrap();
@@ -1067,6 +1109,7 @@ mod tests {
                 }],
                 payment_method: PaymentMethod::Card,
                 weight: None,
+                customer_details: String::new(),
             },
         )
         .unwrap();
@@ -1078,6 +1121,71 @@ mod tests {
         let orders = list_orders_inner(&db).unwrap();
         assert_eq!(orders[0].items[0].comment, "Slight stain");
         assert_eq!(orders[0].items[0].unit_price, 4200);
+    }
+
+    #[test]
+    fn create_order_with_customer_details() {
+        let db = init_db_in_memory();
+        let p = make_product(&db, "Tea", 200, "boissons");
+
+        let order = create_order_inner(
+            &db,
+            CreateOrderPayload {
+                items: vec![CreateOrderItemPayload {
+                    product_id: p.id.clone(),
+                    product_name: "Tea".to_string(),
+                    unit_price: 200,
+                    quantity: 1,
+                    comment: String::new(),
+                }],
+                payment_method: PaymentMethod::Card,
+                weight: None,
+                customer_details: "Alice\nLyon".to_string(),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(order.order.customer_details, "Alice\nLyon");
+
+        let orders = list_orders_inner(&db).unwrap();
+        assert_eq!(orders[0].order.customer_details, "Alice\nLyon");
+    }
+
+    #[test]
+    fn update_order_details() {
+        let db = init_db_in_memory();
+        let p = make_product(&db, "Tea", 200, "boissons");
+
+        let order = create_order_inner(
+            &db,
+            CreateOrderPayload {
+                items: vec![CreateOrderItemPayload {
+                    product_id: p.id.clone(),
+                    product_name: "Tea".to_string(),
+                    unit_price: 200,
+                    quantity: 1,
+                    comment: String::new(),
+                }],
+                payment_method: PaymentMethod::Cash,
+                weight: None,
+                customer_details: "Alice".to_string(),
+            },
+        )
+        .unwrap();
+
+        let updated = update_order_inner(
+            &db,
+            UpdateOrderPayload {
+                id: order.order.id.clone(),
+                weight: Some(2.0),
+                customer_details: "Bob".to_string(),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(updated.order.payment_method, PaymentMethod::Cash);
+        assert_eq!(updated.order.weight, Some(2.0));
+        assert_eq!(updated.order.customer_details, "Bob");
     }
 
     #[test]
@@ -1097,6 +1205,7 @@ mod tests {
                 }],
                 payment_method: PaymentMethod::Card,
                 weight: Some(1.25),
+                customer_details: String::new(),
             },
         )
         .unwrap();
@@ -1123,6 +1232,7 @@ mod tests {
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: Some(-0.5),
+                customer_details: String::new(),
             },
         );
         assert!(result.is_err());
@@ -1138,6 +1248,7 @@ mod tests {
                 items: vec![],
                 payment_method: PaymentMethod::Card,
                 weight: None,
+                customer_details: String::new(),
             },
         );
         assert!(result.is_err());
@@ -1162,6 +1273,7 @@ mod tests {
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: None,
+                customer_details: String::new(),
             },
         )
         .unwrap();
@@ -1187,6 +1299,7 @@ mod tests {
                 ],
                 payment_method: PaymentMethod::Card,
                 weight: Some(2.5),
+                customer_details: String::new(),
             },
         )
         .unwrap();
@@ -1239,6 +1352,7 @@ mod tests {
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: None,
+                customer_details: String::new(),
             },
         )
         .unwrap();

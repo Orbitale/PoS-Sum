@@ -22,6 +22,7 @@ import {
 	toggleProductAvailability,
 	updateCategory,
 	updateConfiguration,
+	updateOrder,
 	updateProduct
 } from './commands.ts';
 import { BackendError } from './errors.ts';
@@ -85,10 +86,19 @@ const commands: Record<string, (args: Args) => Promise<unknown>> = {
 				comment: item.string('comment', '')
 			})),
 			payment_method: payload.oneOf('payment_method', PAYMENT_METHODS),
-			weight: payload.optionalNumber('weight')
+			weight: payload.optionalNumber('weight'),
+			customer_details: payload.string('customer_details', '')
 		});
 	},
 	list_orders: listOrders,
+	update_order: (args) => {
+		const payload = args.object('payload');
+		return updateOrder({
+			id: payload.string('id'),
+			weight: payload.optionalNumber('weight'),
+			customer_details: payload.string('customer_details', '')
+		});
+	},
 	get_dashboard_summary: getDashboardSummary,
 	load_default_dataset: (args) => loadDefaultDataset(args.string('dataset')),
 	reset_database: resetDatabase,

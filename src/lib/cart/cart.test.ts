@@ -193,4 +193,22 @@ describe('buildCreateOrderPayload', () => {
 		expect(buildCreateOrderPayload(cart, 'card', '').weight).toBeNull();
 		expect(buildCreateOrderPayload(cart, 'check', 'nope').weight).toBeNull();
 	});
+
+	it('includes trimmed customer details in the payload', () => {
+		const cart = addProductToCart([], product({ id: 'a', name: 'A', price: 100 }));
+		expect(buildCreateOrderPayload(cart, 'cash', '', '  Jane Doe \n')).toEqual({
+			items: [
+				{
+					product_id: 'a',
+					product_name: 'A',
+					unit_price: 100,
+					quantity: 1,
+					comment: ''
+				}
+			],
+			payment_method: 'cash',
+			weight: null,
+			customer_details: 'Jane Doe'
+		});
+	});
 });
