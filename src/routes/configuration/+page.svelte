@@ -153,8 +153,8 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<label for="shopNameInput" class="form-label">
-            {$t('configuration.shopName')}
-          </label>
+						{$t('configuration.shopName')}
+					</label>
 					<input
 						class="form-control mb-3"
 						id="shopNameInput"
@@ -233,7 +233,7 @@
 							<label
 								class="d-flex align-items-center gap-2 py-1"
 								style="cursor: pointer; font-size: 0.9rem"
-                for="regroupCategory{cat.id}"
+								for="regroupCategory{cat.id}"
 							>
 								<input
 									class="form-check-input"
