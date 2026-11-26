@@ -47,8 +47,8 @@
 		cart = addProductToCart(cart, product);
 	}
 
-	function addCustomProduct(data: { name: string; priceCents: number }) {
-		cart = addCustomProductToCart(cart, data.name, data.priceCents);
+	function addCustomProduct(data: { name: string; priceCents: number; vat?: number }) {
+		cart = addCustomProductToCart(cart, data.name, data.priceCents, data.vat ?? 0);
 		isCustomProductOpen = false;
 	}
 

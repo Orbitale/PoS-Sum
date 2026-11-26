@@ -16,6 +16,7 @@
 		companyAddress,
 		orderWeightEnabled,
 		customProductEnabled,
+		vatEnabled,
 		theme,
 		setConfigValue
 	} from '#lib/stores/app-config.ts';
@@ -68,6 +69,10 @@
 
 	async function toggleCustomProductEnabled() {
 		await setConfigValue('custom_product_enabled', $customProductEnabled ? '0' : '1');
+	}
+
+	async function toggleVatEnabled() {
+		await setConfigValue('vat_enabled', $vatEnabled ? '0' : '1');
 	}
 
 	async function changeLanguage(value: string) {
@@ -193,6 +198,19 @@
 							onchange={toggleCustomProductEnabled}
 						/><label for="customProductEnabled" class="form-check-label">
 							{$t('configuration.enableCustomProduct')}
+						</label>
+					</div>
+
+					<div class="form-check">
+						<input
+							class="form-check-input"
+							type="checkbox"
+							id="vatEnabled"
+							checked={$vatEnabled}
+							onchange={toggleVatEnabled}
+						/>
+						<label for="vatEnabled" class="form-check-label">
+							{$t('configuration.enableVat')}
 						</label>
 					</div>
 

@@ -3,6 +3,13 @@
 	import type { Product, Category } from '#lib/types.ts';
 	import { isBackdropClick } from '#lib/utils/modal.ts';
 	import { t } from '#lib/i18n/index.ts';
+	import { vatEnabled } from '#lib/stores/app-config.ts';
+	import {
+		formatVatForInput,
+		isVatInRange,
+		normalizeVat,
+		parseVatInput
+	} from '#lib/catalog/index.ts';
 
 	interface Props {
 		product: Product | null;
@@ -13,6 +20,7 @@
 			category_id: string;
 			available: boolean;
 			fixed_price: boolean;
+			vat: number;
 		}) => void;
 		onCancel: () => void;
 	}
@@ -26,6 +34,7 @@
 	let category_id = $state(untrack(() => product?.category_id ?? categories[0]?.id ?? ''));
 	let available = $state(untrack(() => product?.available ?? true));
 	let fixed_price = $state(untrack(() => product?.fixed_price ?? true));
+	let vatInput = $state(untrack(() => formatVatForInput(product?.vat ?? 0)));
 	let isSubmitting = $state(false);
 
 	function handleOverlayClick(event: MouseEvent) {
@@ -39,8 +48,14 @@
 		return isNaN(val) ? 0 : Math.round(val * 100);
 	});
 
+	let vat = $derived(parseVatInput(vatInput));
+
 	let canSave = $derived(
-		!isSubmitting && name.trim().length > 0 && !isNaN(priceCents) && category_id.length > 0
+		!isSubmitting &&
+			name.trim().length > 0 &&
+			!isNaN(priceCents) &&
+			category_id.length > 0 &&
+			(!$vatEnabled || isVatInRange(vat))
 	);
 
 	function handleSubmit() {
@@ -53,7 +68,8 @@
 			price: priceCents,
 			category_id,
 			available,
-			fixed_price
+			fixed_price,
+			vat: $vatEnabled ? normalizeVat(vat) : (product?.vat ?? 0)
 		});
 	}
 </script>
@@ -110,6 +126,21 @@
 			</label>
 			<p class="small text-muted mb-0 mt-1">{$t('productForm.fixedPriceHint')}</p>
 		</div>
+
+		{#if $vatEnabled}
+			<div class="mb-3">
+				<label class="form-label fw-semibold" for="product-vat">{$t('productForm.vatLabel')}</label>
+				<input
+					id="product-vat"
+					class="form-control"
+					type="text"
+					inputmode="decimal"
+					bind:value={vatInput}
+					placeholder="0"
+				/>
+				<p class="small text-muted mb-0 mt-1">{$t('productForm.vatHint')}</p>
+			</div>
+		{/if}
 
 		<fieldset class="mb-3 border-0 p-0">
 			<legend class="fw-semibold" style="font-size: 0.95rem">{$t('productForm.category')}</legend>

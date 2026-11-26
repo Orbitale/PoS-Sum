@@ -24,6 +24,7 @@ export const customProductEnabled = derived(
 	appConfig,
 	($c) => ($c.custom_product_enabled ?? '0') === '1'
 );
+export const vatEnabled = derived(appConfig, ($c) => ($c.vat_enabled ?? '0') === '1');
 export const theme = derived(appConfig, ($c) => ($c.theme === 'dark' ? 'dark' : 'light'));
 
 export async function loadAppConfig(): Promise<AppConfigMap> {

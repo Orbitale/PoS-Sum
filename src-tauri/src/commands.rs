@@ -10,6 +10,28 @@ use uuid::Uuid;
 use crate::db::DbState;
 use crate::models::*;
 
+fn order_vat_total_cents(items: &[OrderItem]) -> i64 {
+    let raw: f64 = items
+        .iter()
+        .filter(|item| item.vat != 0.0 && item.total != 0)
+        .map(|item| (item.total as f64) * item.vat / 100.0)
+        .sum();
+    raw.round() as i64
+}
+
+fn normalize_vat(vat: f64) -> Result<f64, String> {
+    if !vat.is_finite() || vat < 0.0 || vat > 100.0 {
+        return Err(format!("VAT must be between 0 and 100, got {vat}"));
+    }
+    let rounded = (vat * 100.0).round() / 100.0;
+    if (vat - rounded).abs() > 1e-9 {
+        return Err(format!(
+            "VAT must have at most 2 decimal places, got {vat}"
+        ));
+    }
+    Ok(rounded)
+}
+
 pub(crate) fn list_configuration_inner(db: &DbState) -> Result<Vec<ConfigurationEntry>, String> {
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
     crate::db::ensure_configuration_defaults(&conn);
@@ -135,7 +157,7 @@ pub(crate) fn list_products_inner(db: &DbState) -> Result<Vec<Product>, String> 
 
     let mut stmt = conn
         .prepare(
-            "SELECT id, name, price, category_id, available, fixed_price
+            "SELECT id, name, price, category_id, available, fixed_price, vat
              FROM products ORDER BY category_id, name",
         )
         .map_err(|e| format!("Query error: {e}"))?;
@@ -149,6 +171,7 @@ pub(crate) fn list_products_inner(db: &DbState) -> Result<Vec<Product>, String> 
                 category_id: row.get(3)?,
                 available: row.get::<_, i64>(4)? != 0,
                 fixed_price: row.get::<_, i64>(5)? != 0,
+                vat: row.get(6)?,
             })
         })
         .map_err(|e| format!("Query error: {e}"))?
@@ -164,13 +187,22 @@ pub(crate) fn create_product_inner(
 ) -> Result<Product, String> {
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
+    let vat = normalize_vat(payload.vat)?;
+
     let id = Uuid::new_v4().to_string();
     let fixed_price_int: i64 = if payload.fixed_price { 1 } else { 0 };
 
     conn.execute(
-        "INSERT INTO products (id, name, price, category_id, available, fixed_price)
-         VALUES (?1, ?2, ?3, ?4, 1, ?5)",
-        params![id, payload.name, payload.price, payload.category_id, fixed_price_int],
+        "INSERT INTO products (id, name, price, category_id, available, fixed_price, vat)
+         VALUES (?1, ?2, ?3, ?4, 1, ?5, ?6)",
+        params![
+            id,
+            payload.name,
+            payload.price,
+            payload.category_id,
+            fixed_price_int,
+            vat
+        ],
     )
     .map_err(|e| format!("Insert error: {e}"))?;
 
@@ -181,6 +213,7 @@ pub(crate) fn create_product_inner(
         category_id: payload.category_id,
         available: true,
         fixed_price: payload.fixed_price,
+        vat,
     })
 }
 
@@ -190,19 +223,22 @@ pub(crate) fn update_product_inner(
 ) -> Result<Product, String> {
     let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
 
+    let vat = normalize_vat(payload.vat)?;
+
     let available_int: i64 = if payload.available { 1 } else { 0 };
     let fixed_price_int: i64 = if payload.fixed_price { 1 } else { 0 };
 
     let rows_affected = conn
         .execute(
-            "UPDATE products SET name = ?1, price = ?2, category_id = ?3, available = ?4, fixed_price = ?5
-             WHERE id = ?6",
+            "UPDATE products SET name = ?1, price = ?2, category_id = ?3, available = ?4, fixed_price = ?5, vat = ?6
+             WHERE id = ?7",
             params![
                 payload.name,
                 payload.price,
                 payload.category_id,
                 available_int,
                 fixed_price_int,
+                vat,
                 payload.id
             ],
         )
@@ -219,6 +255,7 @@ pub(crate) fn update_product_inner(
         category_id: payload.category_id,
         available: payload.available,
         fixed_price: payload.fixed_price,
+        vat,
     })
 }
 
@@ -274,6 +311,7 @@ pub(crate) fn create_order_inner(
                 item.quantity, item.product_id
             ));
         }
+        let vat = normalize_vat(item.vat)?;
         let line_total = item.unit_price * item.quantity;
         order_total += line_total;
         order_items.push(OrderItem {
@@ -285,9 +323,11 @@ pub(crate) fn create_order_inner(
             quantity: item.quantity,
             total: line_total,
             comment: item.comment.clone(),
+            vat,
         });
     }
 
+    let vat_total = order_vat_total_cents(&order_items);
     let created_at = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
 
     let tx = conn
@@ -295,11 +335,12 @@ pub(crate) fn create_order_inner(
         .map_err(|e| format!("Transaction begin error: {e}"))?;
 
     tx.execute(
-        "INSERT INTO orders (id, created_at, total, payment_method, weight, customer_details) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        "INSERT INTO orders (id, created_at, total, vat_total, payment_method, weight, customer_details) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         params![
             order_id,
             created_at,
             order_total,
+            vat_total,
             payload.payment_method.as_db_str(),
             payload.weight,
             payload.customer_details,
@@ -309,8 +350,8 @@ pub(crate) fn create_order_inner(
 
     for oi in &order_items {
         tx.execute(
-            "INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total, comment)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total, comment, vat)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![
                 oi.id,
                 oi.order_id,
@@ -319,7 +360,8 @@ pub(crate) fn create_order_inner(
                 oi.unit_price,
                 oi.quantity,
                 oi.total,
-                oi.comment
+                oi.comment,
+                oi.vat
             ],
         )
         .map_err(|e| format!("Insert order item error: {e}"))?;
@@ -333,6 +375,7 @@ pub(crate) fn create_order_inner(
             id: order_id,
             created_at,
             total: order_total,
+            vat_total,
             payment_method: payload.payment_method,
             weight: payload.weight,
             customer_details: payload.customer_details,
@@ -346,16 +389,16 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
 
     let mut order_stmt = conn
         .prepare(
-            "SELECT id, created_at, total, payment_method, weight, customer_details FROM orders ORDER BY created_at DESC",
+            "SELECT id, created_at, total, vat_total, payment_method, weight, customer_details FROM orders ORDER BY created_at DESC",
         )
         .map_err(|e| format!("Query error: {e}"))?;
 
     let orders: Vec<Order> = order_stmt
         .query_map([], |row| {
-            let pm_str: String = row.get(3)?;
+            let pm_str: String = row.get(4)?;
             let payment_method = PaymentMethod::from_db_str(&pm_str).map_err(|e| {
                 rusqlite::Error::FromSqlConversionFailure(
-                    3,
+                    4,
                     rusqlite::types::Type::Text,
                     Box::from(e),
                 )
@@ -364,9 +407,10 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
                 id: row.get(0)?,
                 created_at: row.get(1)?,
                 total: row.get(2)?,
+                vat_total: row.get(3)?,
                 payment_method,
-                weight: row.get(4)?,
-                customer_details: row.get(5)?,
+                weight: row.get(5)?,
+                customer_details: row.get(6)?,
             })
         })
         .map_err(|e| format!("Query error: {e}"))?
@@ -375,7 +419,7 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
 
     let mut item_stmt = conn
         .prepare(
-            "SELECT id, order_id, product_id, product_name, unit_price, quantity, total, comment
+            "SELECT id, order_id, product_id, product_name, unit_price, quantity, total, comment, vat
              FROM order_items
              ORDER BY order_id",
         )
@@ -392,6 +436,7 @@ pub(crate) fn list_orders_inner(db: &DbState) -> Result<Vec<OrderWithItems>, Str
                 quantity: row.get(5)?,
                 total: row.get(6)?,
                 comment: row.get(7)?,
+                vat: row.get(8)?,
             })
         })
         .map_err(|e| format!("Query error: {e}"))?
@@ -566,8 +611,8 @@ pub(crate) fn delete_category_inner(db: &DbState, category_id: String) -> Result
 }
 
 pub(crate) fn load_default_dataset_inner(db: &DbState, dataset: String) -> Result<(), String> {
-    let conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
-    crate::db::load_default_dataset(&conn, &dataset)
+    let mut conn = db.conn.lock().map_err(|e| format!("DB lock error: {e}"))?;
+    crate::db::load_default_dataset(&mut conn, &dataset)
 }
 
 pub(crate) fn reset_database_inner(db: &DbState) -> Result<(), String> {
@@ -910,6 +955,7 @@ mod tests {
                 price,
                 category_id: category_id.to_string(),
                 fixed_price: true,
+                vat: 0.0,
             },
         )
         .expect("create_product_inner failed")
@@ -933,6 +979,7 @@ mod tests {
         assert!(ids.contains(&"custom_product_enabled"));
         assert!(ids.contains(&"shop_language"));
         assert!(ids.contains(&"theme"));
+        assert!(ids.contains(&"vat_enabled"));
 
         let lang = entries.iter().find(|e| e.id == "shop_language").unwrap();
         assert_eq!(lang.value, "fr");
@@ -965,6 +1012,41 @@ mod tests {
     }
 
     #[test]
+    fn create_product_rejects_overly_precise_vat() {
+        let db = init_db_in_memory();
+        ensure_category(&db, "snack");
+        let result = create_product_inner(
+            &db,
+            CreateProductPayload {
+                name: "Item".to_string(),
+                price: 100,
+                category_id: "snack".to_string(),
+                fixed_price: true,
+                vat: 5.555,
+            },
+        );
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn create_product_accepts_fractional_vat() {
+        let db = init_db_in_memory();
+        ensure_category(&db, "snack");
+        let created = create_product_inner(
+            &db,
+            CreateProductPayload {
+                name: "Item".to_string(),
+                price: 100,
+                category_id: "snack".to_string(),
+                fixed_price: true,
+                vat: 5.5,
+            },
+        )
+        .unwrap();
+        assert_eq!(created.vat, 5.5);
+    }
+
+    #[test]
     fn create_and_list_products() {
         let db = init_db_in_memory();
         let created = make_product(&db, "Cola", 150, "boisson-sans-alcool");
@@ -973,6 +1055,7 @@ mod tests {
         assert_eq!(created.category_id, "boisson-sans-alcool");
         assert!(created.available);
         assert!(created.fixed_price);
+        assert_eq!(created.vat, 0.0);
 
         let products = list_products_inner(&db).unwrap();
         assert_eq!(products.len(), 1);
@@ -990,6 +1073,7 @@ mod tests {
                 price: 1000,
                 category_id: "services".to_string(),
                 fixed_price: false,
+                vat: 0.0,
             },
         )
         .unwrap();
@@ -1010,6 +1094,7 @@ mod tests {
                 category_id: "snack".to_string(),
                 available: false,
                 fixed_price: false,
+                vat: 0.0,
             },
         )
         .unwrap();
@@ -1033,6 +1118,7 @@ mod tests {
                 category_id: "snack".to_string(),
                 available: true,
                 fixed_price: true,
+                vat: 0.0,
             },
         );
         assert!(result.is_err());
@@ -1069,6 +1155,7 @@ mod tests {
                     unit_price: 50,
                     quantity: 3,
                     comment: String::new(),
+                    vat: 0.0,
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: None,
@@ -1078,6 +1165,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(order.order.total, 150);
+        assert_eq!(order.order.vat_total, 0);
         assert_eq!(order.order.payment_method, PaymentMethod::Cash);
         assert_eq!(order.order.weight, None);
         assert_eq!(order.items.len(), 1);
@@ -1090,6 +1178,33 @@ mod tests {
         assert_eq!(orders.len(), 1);
         assert_eq!(orders[0].order.total, 150);
         assert_eq!(orders[0].items.len(), 1);
+    }
+
+    #[test]
+    fn create_order_stores_vat_total() {
+        let db = init_db_in_memory();
+        let p = make_product(&db, "Beer", 300, "drinks");
+        let order = create_order_inner(
+            &db,
+            CreateOrderPayload {
+                items: vec![CreateOrderItemPayload {
+                    product_id: p.id.clone(),
+                    product_name: "Beer".to_string(),
+                    unit_price: 300,
+                    quantity: 1,
+                    comment: String::new(),
+                    vat: 5.5,
+                }],
+                payment_method: PaymentMethod::Cash,
+                weight: None,
+                customer_details: String::new(),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(order.order.vat_total, 17);
+        let orders = list_orders_inner(&db).unwrap();
+        assert_eq!(orders[0].order.vat_total, 17);
     }
 
     #[test]
@@ -1106,6 +1221,7 @@ mod tests {
                     unit_price: 4200,
                     quantity: 1,
                     comment: "Slight stain".to_string(),
+                    vat: 0.0,
                 }],
                 payment_method: PaymentMethod::Card,
                 weight: None,
@@ -1137,6 +1253,7 @@ mod tests {
                     unit_price: 200,
                     quantity: 1,
                     comment: String::new(),
+                    vat: 0.0,
                 }],
                 payment_method: PaymentMethod::Card,
                 weight: None,
@@ -1165,6 +1282,7 @@ mod tests {
                     unit_price: 200,
                     quantity: 1,
                     comment: String::new(),
+                    vat: 0.0,
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: None,
@@ -1202,6 +1320,7 @@ mod tests {
                     unit_price: 50,
                     quantity: 1,
                     comment: String::new(),
+                    vat: 0.0,
                 }],
                 payment_method: PaymentMethod::Card,
                 weight: Some(1.25),
@@ -1229,6 +1348,7 @@ mod tests {
                     unit_price: 50,
                     quantity: 1,
                     comment: String::new(),
+                    vat: 0.0,
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: Some(-0.5),
@@ -1270,6 +1390,7 @@ mod tests {
                     unit_price: 200,
                     quantity: 2,
                     comment: String::new(),
+                    vat: 0.0,
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: None,
@@ -1288,6 +1409,7 @@ mod tests {
                         unit_price: 200,
                         quantity: 1,
                         comment: String::new(),
+                        vat: 0.0,
                     },
                     CreateOrderItemPayload {
                         product_id: p2.id.clone(),
@@ -1295,6 +1417,7 @@ mod tests {
                         unit_price: 100,
                         quantity: 3,
                         comment: String::new(),
+                        vat: 0.0,
                     },
                 ],
                 payment_method: PaymentMethod::Card,
@@ -1349,6 +1472,7 @@ mod tests {
                     unit_price: 200,
                     quantity: 1,
                     comment: String::new(),
+                    vat: 0.0,
                 }],
                 payment_method: PaymentMethod::Cash,
                 weight: None,
@@ -1405,6 +1529,18 @@ mod tests {
         assert_eq!(products.len(), 31);
         assert_eq!(categories.len(), 7);
         assert!(products.iter().all(|p| p.fixed_price));
+        let tea = products.iter().find(|p| p.id == "the").unwrap();
+        assert_eq!(tea.vat, 5.5);
+        let beer = products.iter().find(|p| p.id == "biere-25cl").unwrap();
+        assert_eq!(beer.vat, 20.0);
+        let orders = list_orders_inner(&db).unwrap();
+        assert_eq!(orders.len(), 3);
+        let evening = orders
+            .iter()
+            .find(|o| o.order.id == "snackbar-order-evening")
+            .unwrap();
+        assert_eq!(evening.order.vat_total, 120);
+        assert_eq!(evening.order.total, 700);
     }
 
     #[test]
@@ -1415,6 +1551,14 @@ mod tests {
         assert!(!products.is_empty());
         assert!(products.iter().any(|p| !p.fixed_price));
         assert!(products.iter().any(|p| p.fixed_price));
+        let orders = list_orders_inner(&db).unwrap();
+        assert_eq!(orders.len(), 3);
+        let open = orders
+            .iter()
+            .find(|o| o.order.id == "clothing-order-open-price")
+            .unwrap();
+        assert_eq!(open.items[0].unit_price, 4500);
+        assert_eq!(open.items[0].comment, "Soldes −10 %");
     }
 
     #[test]

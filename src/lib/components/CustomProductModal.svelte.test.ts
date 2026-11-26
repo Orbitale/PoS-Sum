@@ -23,7 +23,7 @@ describe('CustomProductModal', () => {
 		await user.click(screen.getByRole('button', { name: ',00' }));
 		await user.click(screen.getByRole('button', { name: /Ajouter à la commande/ }));
 
-		expect(onConfirm).toHaveBeenCalledWith({ name: 'Service', priceCents: 500 });
+		expect(onConfirm).toHaveBeenCalledWith({ name: 'Service', priceCents: 500, vat: 0 });
 	});
 
 	it('cancels without adding a product', async () => {

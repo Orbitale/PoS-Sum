@@ -18,6 +18,7 @@ const order: OrderWithItems = {
 	id: 'order-1',
 	created_at: '2025-06-15T14:30:00Z',
 	total: 500,
+	vat_total: 0,
 	payment_method: 'cash',
 	weight: 1.5,
 	customer_details: 'Alice',
@@ -30,7 +31,8 @@ const order: OrderWithItems = {
 			unit_price: 500,
 			quantity: 1,
 			total: 500,
-			comment: ''
+			comment: '',
+			vat: 0
 		}
 	]
 };

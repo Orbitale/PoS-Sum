@@ -33,9 +33,10 @@ export function addProductToCart(items: CartItem[], product: Product): CartItem[
 export function addCustomProductToCart(
 	items: CartItem[],
 	name: string,
-	priceCents: number
+	priceCents: number,
+	vat = 0
 ): CartItem[] {
-	const product = createCustomProduct(name, priceCents);
+	const product = createCustomProduct(name, priceCents, vat);
 	return [...items, { product, quantity: 1, unitPrice: priceCents, comment: '' }];
 }
 
@@ -134,7 +135,8 @@ export function buildCreateOrderPayload(
 			product_name: i.product.name,
 			unit_price: i.unitPrice,
 			quantity: i.quantity,
-			comment: i.comment
+			comment: i.comment,
+			vat: i.product.vat ?? 0
 		})),
 		payment_method: paymentMethod,
 		weight: parseOptionalFloat(weightInput),

@@ -32,6 +32,8 @@ export interface Product {
 	available: boolean;
 	/** When false, the price is only a suggestion and can be changed on each order. */
 	fixed_price: boolean;
+	/** VAT rate in percent (0–100, up to 2 decimal places). */
+	vat: number;
 }
 
 export type PaymentMethod = 'cash' | 'card' | 'check';
@@ -40,6 +42,8 @@ export interface Order {
 	id: string;
 	created_at: string;
 	total: number;
+	/** Total VAT in cents (fixed at checkout). */
+	vat_total: number;
 	payment_method: PaymentMethod;
 	weight: number | null;
 	customer_details: string;
@@ -54,6 +58,8 @@ export interface OrderItem {
 	quantity: number;
 	total: number;
 	comment: string;
+	/** VAT rate in percent (0–100, up to 2 decimal places), copied at sale time. */
+	vat: number;
 }
 
 export interface OrderWithItems extends Order {
@@ -66,6 +72,7 @@ export interface CreateOrderItemPayload {
 	unit_price: number;
 	quantity: number;
 	comment?: string;
+	vat?: number;
 }
 
 export interface CreateOrderPayload {
@@ -86,6 +93,7 @@ export interface CreateProductPayload {
 	price: number;
 	category_id: string;
 	fixed_price?: boolean;
+	vat?: number;
 }
 
 export interface UpdateProductPayload {
@@ -95,6 +103,7 @@ export interface UpdateProductPayload {
 	category_id: string;
 	available: boolean;
 	fixed_price: boolean;
+	vat?: number;
 }
 
 export interface AppVersion {

@@ -17,10 +17,11 @@ pub fn migrations() -> Vec<rusqlite_migration::M<'static>> {
         rusqlite_migration::M::up(include_str!("./migrations/1-nonprofits-enhancements.sql")),
         rusqlite_migration::M::up(include_str!("./migrations/2-add-check-payment.sql")),
         rusqlite_migration::M::up(include_str!("./migrations/3-customer-details.sql")),
+        rusqlite_migration::M::up(include_str!("./migrations/4-product-vat.sql")),
     ]
 }
 
-const CONFIG_DEFAULTS: &[(&str, &str, &str)] = &[
+pub(crate) const CONFIG_DEFAULTS: &[(&str, &str, &str)] = &[
     ("shop_name", "Shop name", ""),
     ("company_details", "Company details / address", ""),
     ("order_weight_enabled", "Activate weight field in Order page", "0"),
@@ -31,6 +32,7 @@ const CONFIG_DEFAULTS: &[(&str, &str, &str)] = &[
     ),
     ("shop_language", "Shop language", "fr"),
     ("theme", "Dark/Light mode", "light"),
+    ("vat_enabled", "Activate VAT support", "0"),
 ];
 
 pub fn ensure_configuration_defaults(conn: &Connection) {
@@ -43,25 +45,8 @@ pub fn ensure_configuration_defaults(conn: &Connection) {
     }
 }
 
-pub fn load_default_dataset(conn: &Connection, dataset: &str) -> Result<(), String> {
-    let sql = match dataset {
-        "snackbar" => include_str!("./seed/snackbar.sql"),
-        "clothing" => include_str!("./seed/clothing.sql"),
-        other => return Err(format!("Unknown default dataset: {other}")),
-    };
-
-    conn.execute_batch(
-        "BEGIN;
-         DELETE FROM products;
-         DELETE FROM categories;
-         COMMIT;",
-    )
-    .map_err(|e| format!("Failed to clear catalog: {e}"))?;
-
-    conn.execute_batch(sql)
-        .map_err(|e| format!("Failed to load default dataset '{dataset}': {e}"))?;
-
-    Ok(())
+pub fn load_default_dataset(conn: &mut Connection, dataset: &str) -> Result<(), String> {
+    crate::datasets::load_default_dataset(conn, dataset)
 }
 
 #[cfg(test)]

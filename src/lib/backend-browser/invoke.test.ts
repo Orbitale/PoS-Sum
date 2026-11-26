@@ -80,7 +80,8 @@ describe('configuration', () => {
 			'order_weight_enabled',
 			'shop_language',
 			'shop_name',
-			'theme'
+			'theme',
+			'vat_enabled'
 		]);
 		expect(entries.find((entry) => entry.id === 'shop_language')?.value).toBe('fr');
 	});
@@ -128,7 +129,8 @@ describe('catalog', () => {
 			price: 150,
 			category_id: 'drinks',
 			available: true,
-			fixed_price: true
+			fixed_price: true,
+			vat: 0
 		});
 		await expect(invoke('list_products')).resolves.toEqual([created]);
 	});
@@ -136,6 +138,27 @@ describe('catalog', () => {
 	it('creates products with an open price', async () => {
 		const created = await makeProduct('Custom', 1000, 'services', false);
 		expect(created.fixed_price).toBe(false);
+	});
+
+	it('stores fractional VAT rates', async () => {
+		await invoke('create_category', {
+			payload: { id: 'food', label: 'Food', color: '#3b82f6' }
+		});
+		const created = await invoke<Product>('create_product', {
+			payload: { name: 'Meal', price: 1000, category_id: 'food', vat: 5.5 }
+		});
+		expect(created.vat).toBe(5.5);
+	});
+
+	it('rejects overly precise VAT rates', async () => {
+		await invoke('create_category', {
+			payload: { id: 'food', label: 'Food', color: '#3b82f6' }
+		});
+		await expect(
+			invoke('create_product', {
+				payload: { name: 'Meal', price: 1000, category_id: 'food', vat: 5.555 }
+			})
+		).rejects.toThrow('VAT must');
 	});
 
 	it('sorts products by category, then by name', async () => {
@@ -163,8 +186,9 @@ describe('catalog', () => {
 			available: false,
 			fixed_price: false
 		};
-		await expect(invoke('update_product', { payload })).resolves.toEqual(payload);
-		await expect(invoke('list_products')).resolves.toEqual([payload]);
+		const expected = { ...payload, vat: 0 };
+		await expect(invoke('update_product', { payload })).resolves.toEqual(expected);
+		await expect(invoke('list_products')).resolves.toEqual([expected]);
 	});
 
 	it('rejects updates of unknown products and towards unknown categories', async () => {
@@ -241,6 +265,14 @@ describe('catalog', () => {
 });
 
 describe('orders', () => {
+	it('stores order vat_total at checkout', async () => {
+		const beer = await makeProduct('Beer', 300, 'drinks');
+		const order = await createOrder([line(beer, 1, { vat: 5.5 })]);
+		expect(order.vat_total).toBe(17);
+		const [stored] = await invoke<OrderWithItems[]>('list_orders');
+		expect(stored.vat_total).toBe(17);
+	});
+
 	it('creates and lists orders', async () => {
 		const product = await makeProduct('Candy', 50, 'sucreries');
 		const order = await createOrder([line(product, 3)]);
@@ -248,6 +280,7 @@ describe('orders', () => {
 			id: expect.any(String),
 			created_at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/),
 			total: 150,
+			vat_total: 0,
 			payment_method: 'cash',
 			weight: null,
 			customer_details: '',
@@ -260,7 +293,8 @@ describe('orders', () => {
 					unit_price: 50,
 					quantity: 3,
 					total: 150,
-					comment: ''
+					comment: '',
+					vat: 0
 				}
 			]
 		});
@@ -411,6 +445,16 @@ describe('datasets and resets', () => {
 		expect(categories).toHaveLength(7);
 		expect(products.every((product) => product.available && product.fixed_price)).toBe(true);
 		expect(categories.some((category) => category.id === 'old')).toBe(false);
+		expect(products.find((product) => product.id === 'the')?.vat).toBe(5.5);
+		expect(products.find((product) => product.id === 'biere-25cl')?.vat).toBe(20);
+		expect(products.find((product) => product.id === 'consigne-verre')?.vat).toBe(0);
+		const entries = await invoke<ConfigurationEntry[]>('list_configuration');
+		expect(entries.find((entry) => entry.id === 'vat_enabled')?.value).toBe('1');
+		const orders = await invoke<OrderWithItems[]>('list_orders');
+		expect(orders).toHaveLength(3);
+		const evening = orders.find((order) => order.id === 'snackbar-order-evening');
+		expect(evening?.vat_total).toBe(120);
+		expect(evening?.total).toBe(700);
 	});
 
 	it('loads the clothing dataset with open prices', async () => {
@@ -418,6 +462,10 @@ describe('datasets and resets', () => {
 		const products = await invoke<Product[]>('list_products');
 		expect(products.some((product) => !product.fixed_price)).toBe(true);
 		expect(products.some((product) => product.fixed_price)).toBe(true);
+		const orders = await invoke<OrderWithItems[]>('list_orders');
+		expect(orders).toHaveLength(3);
+		const openPrice = orders.find((order) => order.id === 'clothing-order-open-price');
+		expect(openPrice?.items[0].unit_price).toBe(4500);
 	});
 
 	it('rejects unknown datasets without touching the catalog', async () => {
@@ -451,7 +499,7 @@ describe('datasets and resets', () => {
 		await expect(invoke('list_categories')).resolves.toEqual([]);
 		await expect(invoke('list_orders')).resolves.toEqual([]);
 		const entries = await invoke<ConfigurationEntry[]>('list_configuration');
-		expect(entries).toHaveLength(6);
+   expect(entries).toHaveLength(7);
 		expect(entries.find((entry) => entry.id === 'shop_name')?.value).toBe('');
 	});
 });

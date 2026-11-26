@@ -53,7 +53,10 @@
 		"confirm": "Confirm",
 		"numberOfProducts": "Number of products",
 		"submitting": "Submitting...",
-		"customerDetails": "Customer details"
+		"customerDetails": "Customer details",
+		"colProduct": "Product",
+		"colVat": "VAT",
+		"colSubtotal": "Subtotal"
 	},
 	"productForm": {
 		"editTitle": "Edit Product",
@@ -67,7 +70,9 @@
 		"available": "Available",
 		"cancel": "Cancel",
 		"save": "Save",
-		"saving": "Saving..."
+		"saving": "Saving...",
+		"vatLabel": "VAT (%)",
+		"vatHint": "Between 0 and 100, with up to 2 decimal places."
 	},
 	"categoryForm": {
 		"editTitle": "Edit Category",
@@ -93,7 +98,8 @@
 		"customProductNamePlaceholder": "Product name",
 		"customProductPrice": "Price (EUR)",
 		"customProductCancel": "Cancel",
-		"customProductAdd": "Add to order"
+		"customProductAdd": "Add to order",
+		"customProductVat": "VAT (%)"
 	},
 	"products": {
 		"title": "Products",
@@ -102,6 +108,7 @@
 		"empty": "No products yet. Add your first product!",
 		"colName": "Name",
 		"colPrice": "Price",
+		"colVat": "VAT",
 		"colFixedPrice": "Price type",
 		"colCategory": "Category",
 		"colAvailable": "Available",
@@ -141,6 +148,7 @@
 		"loadError": "Failed to load orders: {error}",
 		"colProduct": "Product",
 		"colQty": "Qty",
+		"colVat": "VAT amount",
 		"colUnitPrice": "Unit price",
 		"colSubtotal": "Subtotal",
 		"paymentMethod": {
@@ -170,6 +178,7 @@
 			"date": "Date",
 			"payment": "Payment method",
 			"total": "Total",
+			"vatTotal": "VAT",
 			"print": "Print",
 			"close": "Close",
 			"customer": "Customer",
@@ -227,15 +236,16 @@
 		"orderOptions": "Order options",
 		"enableOrderWeight": "Activate \"weight\" field on the \"Order\" page",
 		"enableCustomProduct": "Allow adding custom product on-the-fly",
+		"enableVat": "Activate VAT support",
 		"categoryGrouping": "Category grouping",
 		"categoryGroupingHint": "Check a category to group its products behind a single button on the Sales screen.",
 		"groupAll": "Group all",
 		"ungroupAll": "Ungroup all",
 		"noCategoriesYet": "No categories yet.",
 		"replaceDefaultsTitle": "Placeholder catalog",
-		"replaceDefaults": "Replace products and categories with default placeholder data",
-		"replaceDefaultsHint": "This <strong class=\"text-decoration-underline\">replaces</strong> the current products and categories. Existing orders are kept.",
-		"replaceDefaultsConfirm": "Replace all products and categories with the selected placeholder dataset? This cannot be undone.",
+		"replaceDefaults": "Load default shop example",
+		"replaceDefaultsHint": "This <strong class=\"text-decoration-underline\">replaces</strong> the catalog and orders with the selected example. Configuration is updated only for keys defined in that example (e.g. VAT support).",
+		"replaceDefaultsConfirm": "Load the selected shop example? Current products, categories and orders will be replaced. This cannot be undone.",
 		"replaceDefaultsFailed": "Failed to load placeholder data: {error}",
 		"replacingDefaults": "Loading...",
 		"datasetSnackbar": "Snackbar",

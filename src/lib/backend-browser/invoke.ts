@@ -58,7 +58,8 @@ const commands: Record<string, (args: Args) => Promise<unknown>> = {
 			name: payload.string('name'),
 			price: payload.integer('price'),
 			category_id: payload.string('category_id'),
-			fixed_price: payload.boolean('fixed_price', true)
+			fixed_price: payload.boolean('fixed_price', true),
+			vat: payload.number('vat', 0)
 		});
 	},
 	update_product: (args) => {
@@ -69,7 +70,8 @@ const commands: Record<string, (args: Args) => Promise<unknown>> = {
 			price: payload.integer('price'),
 			category_id: payload.string('category_id'),
 			available: payload.boolean('available'),
-			fixed_price: payload.boolean('fixed_price')
+			fixed_price: payload.boolean('fixed_price'),
+			vat: payload.number('vat', 0)
 		});
 	},
 	toggle_product_availability: (args) => toggleProductAvailability(args.string('productId')),
@@ -83,7 +85,8 @@ const commands: Record<string, (args: Args) => Promise<unknown>> = {
 				product_name: item.string('product_name'),
 				unit_price: item.integer('unit_price'),
 				quantity: item.integer('quantity'),
-				comment: item.string('comment', '')
+				comment: item.string('comment', ''),
+				vat: item.number('vat', 0)
 			})),
 			payment_method: payload.oneOf('payment_method', PAYMENT_METHODS),
 			weight: payload.optionalNumber('weight'),

@@ -12,7 +12,8 @@ vi.mock('#lib/stores/app-config.ts', async () => {
 	return {
 		appConfig,
 		shopName: derived(appConfig, ($c) => $c.shop_name ?? ''),
-		companyAddress: derived(appConfig, ($c) => $c.company_details ?? '')
+		companyAddress: derived(appConfig, ($c) => $c.company_details ?? ''),
+		vatEnabled: derived(appConfig, ($c) => ($c.vat_enabled ?? '0') === '1')
 	};
 });
 
@@ -22,6 +23,7 @@ const order: OrderWithItems = {
 	id: 'order-42',
 	created_at: '2025-06-15T14:30:00.000Z',
 	total: 650,
+	vat_total: 0,
 	payment_method: 'card',
 	weight: null,
 	customer_details: 'Jean Dupont\n12 av. Victor Hugo',
@@ -34,7 +36,8 @@ const order: OrderWithItems = {
 			unit_price: 150,
 			quantity: 2,
 			total: 300,
-			comment: 'sans sucre'
+			comment: 'sans sucre',
+			vat: 0
 		},
 		{
 			id: 'line-2',
@@ -44,7 +47,8 @@ const order: OrderWithItems = {
 			unit_price: 350,
 			quantity: 1,
 			total: 350,
-			comment: ''
+			comment: '',
+			vat: 0
 		}
 	]
 };

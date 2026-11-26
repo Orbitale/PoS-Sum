@@ -53,7 +53,10 @@
 		"confirm": "Confirmer",
 		"numberOfProducts": "Nombre de produits",
 		"submitting": "Envoi...",
-		"customerDetails": "Coordonnées du client"
+		"customerDetails": "Coordonnées du client",
+		"colProduct": "Produit",
+		"colVat": "TVA",
+		"colSubtotal": "Sous-total"
 	},
 	"productForm": {
 		"editTitle": "Modifier le produit",
@@ -67,7 +70,9 @@
 		"available": "Disponible",
 		"cancel": "Annuler",
 		"save": "Enregistrer",
-		"saving": "Enregistrement..."
+		"saving": "Enregistrement...",
+		"vatLabel": "TVA (%)",
+		"vatHint": "Entre 0 et 100, avec au plus 2 décimales."
 	},
 	"categoryForm": {
 		"editTitle": "Modifier la catégorie",
@@ -93,7 +98,8 @@
 		"customProductNamePlaceholder": "Nom du produit",
 		"customProductPrice": "Prix (EUR)",
 		"customProductCancel": "Annuler",
-		"customProductAdd": "Ajouter à la commande"
+		"customProductAdd": "Ajouter à la commande",
+		"customProductVat": "TVA (%)"
 	},
 	"products": {
 		"title": "Produits",
@@ -102,6 +108,7 @@
 		"empty": "Aucun produit. Ajoutez votre premier produit !",
 		"colName": "Nom",
 		"colPrice": "Prix",
+		"colVat": "TVA",
 		"colFixedPrice": "Type de prix",
 		"colCategory": "Catégorie",
 		"colAvailable": "Disponible",
@@ -141,6 +148,7 @@
 		"loadError": "Échec du chargement des commandes : {error}",
 		"colProduct": "Produit",
 		"colQty": "Qté",
+		"colVat": "Montant TVA",
 		"colUnitPrice": "Prix unitaire",
 		"colSubtotal": "Sous-total",
 		"paymentMethod": {
@@ -170,6 +178,7 @@
 			"date": "Date",
 			"payment": "Mode de paiement",
 			"total": "Total",
+			"vatTotal": "TVA",
 			"print": "Imprimer",
 			"close": "Fermer",
 			"customer": "Client",
@@ -228,15 +237,16 @@
 		"orderOptions": "Options de commande",
 		"enableOrderWeight": "Activer le champ \"poids\" sur la page \"Commande\"",
 		"enableCustomProduct": "Autoriser l'ajout d'un produit personnalisé à la volée",
+		"enableVat": "Activer la prise en charge de la TVA",
 		"categoryGrouping": "Regroupement des catégories",
 		"categoryGroupingHint": "Cochez une catégorie pour regrouper ses produits derrière un seul bouton sur l'écran de vente.",
 		"groupAll": "Tout regrouper",
 		"ungroupAll": "Tout dégrouper",
 		"noCategoriesYet": "Aucune catégorie pour le moment.",
 		"replaceDefaultsTitle": "Catalogue d'exemple",
-		"replaceDefaults": "Remplacer les produits et catégories par les données d'exemple",
-		"replaceDefaultsHint": "Cela <strong class=\"text-decoration-underline\">remplace</strong> les produits et catégories actuels. Les commandes existantes sont conservées.",
-		"replaceDefaultsConfirm": "Remplacer tous les produits et catégories par le jeu de données sélectionné ? Cette action est irréversible.",
+		"replaceDefaults": "Charger l'exemple de boutique",
+		"replaceDefaultsHint": "Cela <strong class=\"text-decoration-underline\">remplace</strong> le catalogue et les commandes par l'exemple sélectionné. La configuration n'est modifiée que pour les clés définies dans cet exemple (ex. TVA).",
+		"replaceDefaultsConfirm": "Charger l'exemple de boutique sélectionné ? Les produits, catégories et commandes actuels seront remplacés. Cette action est irréversible.",
 		"replaceDefaultsFailed": "Échec du chargement des données d'exemple : {error}",
 		"replacingDefaults": "Chargement...",
 		"datasetSnackbar": "Snack-bar",

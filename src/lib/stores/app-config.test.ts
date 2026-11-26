@@ -10,6 +10,7 @@ import {
 	appConfig,
 	companyAddress,
 	customProductEnabled,
+	vatEnabled,
 	loadAppConfig,
 	orderWeightEnabled,
 	setConfigValue,
@@ -28,6 +29,7 @@ describe('app-config store', () => {
 		expect(get(companyAddress)).toBe('');
 		expect(get(orderWeightEnabled)).toBe(false);
 		expect(get(customProductEnabled)).toBe(false);
+		expect(get(vatEnabled)).toBe(false);
 		expect(get(theme)).toBe('light');
 
 		appConfig.set({
@@ -35,6 +37,7 @@ describe('app-config store', () => {
 			company_details: 'Café Test SARL\n1 rue de la Paix\n75002 Paris',
 			order_weight_enabled: '1',
 			custom_product_enabled: '1',
+			vat_enabled: '1',
 			theme: 'dark'
 		});
 
@@ -42,6 +45,7 @@ describe('app-config store', () => {
 		expect(get(companyAddress)).toBe('Café Test SARL\n1 rue de la Paix\n75002 Paris');
 		expect(get(orderWeightEnabled)).toBe(true);
 		expect(get(customProductEnabled)).toBe(true);
+		expect(get(vatEnabled)).toBe(true);
 		expect(get(theme)).toBe('dark');
 	});
 

@@ -21,6 +21,7 @@ function product(partial: Partial<Product> & Pick<Product, 'id' | 'name' | 'pric
 		category_id: 'drinks',
 		available: true,
 		fixed_price: true,
+		vat: 0,
 		...partial
 	};
 }
@@ -203,7 +204,8 @@ describe('buildCreateOrderPayload', () => {
 					product_name: 'A',
 					unit_price: 100,
 					quantity: 1,
-					comment: ''
+					comment: '',
+					vat: 0
 				}
 			],
 			payment_method: 'cash',

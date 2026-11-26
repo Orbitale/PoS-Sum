@@ -18,7 +18,7 @@ export function canEditCartUnitPrice(
 	return !product.fixed_price || isCustomProduct(product);
 }
 
-export function createCustomProduct(name: string, priceCents: number): Product {
+export function createCustomProduct(name: string, priceCents: number, vat = 0): Product {
 	return {
 		id: crypto.randomUUID(),
 		name,
@@ -26,6 +26,7 @@ export function createCustomProduct(name: string, priceCents: number): Product {
 		category_id: CUSTOM_PRODUCT_CATEGORY_ID,
 		available: true,
 		// Keeps custom lines out of total edits; their own price stays editable.
-		fixed_price: true
+		fixed_price: true,
+		vat
 	};
 }

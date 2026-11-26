@@ -34,7 +34,8 @@ describe('ProductFormModal', () => {
 			price: 250,
 			category_id: 'food',
 			available: true,
-			fixed_price: true
+			fixed_price: true,
+			vat: 0
 		});
 	});
 
@@ -47,7 +48,8 @@ describe('ProductFormModal', () => {
 			price: 150,
 			category_id: 'drinks',
 			available: true,
-			fixed_price: false
+			fixed_price: false,
+			vat: 0
 		};
 
 		render(ProductFormModal, {
@@ -66,7 +68,8 @@ describe('ProductFormModal', () => {
 			price: 150,
 			category_id: 'drinks',
 			available: false,
-			fixed_price: false
+			fixed_price: false,
+			vat: 0
 		});
 	});
 

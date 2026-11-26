@@ -38,6 +38,7 @@ describe('buildOrdersCsv', () => {
 				id: 'ord-1',
 				created_at: '2026-01-01T10:00:00Z',
 				total: 300,
+				vat_total: 0,
 				payment_method: 'cash',
 				weight: 1.2,
 				customer_details: '',
@@ -50,7 +51,8 @@ describe('buildOrdersCsv', () => {
 						unit_price: 150,
 						quantity: 2,
 						total: 300,
-						comment: ''
+						comment: '',
+						vat: 0
 					}
 				]
 			}
@@ -77,6 +79,7 @@ describe('buildOrdersCsv', () => {
 				id: 'ord-1',
 				created_at: '2026-01-01T10:00:00Z',
 				total: 150,
+				vat_total: 0,
 				payment_method: 'cash',
 				weight: null,
 				customer_details: '',
@@ -89,7 +92,8 @@ describe('buildOrdersCsv', () => {
 						unit_price: 150,
 						quantity: 1,
 						total: 150,
-						comment: ''
+						comment: '',
+						vat: 0
 					}
 				]
 			},
@@ -97,6 +101,7 @@ describe('buildOrdersCsv', () => {
 				id: 'ord-2',
 				created_at: '2026-01-02T10:00:00Z',
 				total: 200,
+				vat_total: 0,
 				payment_method: 'card',
 				weight: null,
 				customer_details: '',
@@ -109,7 +114,8 @@ describe('buildOrdersCsv', () => {
 						unit_price: 200,
 						quantity: 1,
 						total: 200,
-						comment: ''
+						comment: '',
+						vat: 0
 					}
 				]
 			}

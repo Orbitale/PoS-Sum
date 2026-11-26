@@ -1,0 +1,424 @@
+{
+	"categories": [
+		{
+			"id": "cake-sale",
+			"label": "Cakes salés",
+			"color": "#e8a735"
+		},
+		{
+			"id": "sandwichs",
+			"label": "Sandwiches/Paninis",
+			"color": "#9a8441"
+		},
+		{
+			"id": "boisson-sans-alcool",
+			"label": "Boisson sans alcool",
+			"color": "#3b82f6"
+		},
+		{
+			"id": "alcool",
+			"label": "Alcool",
+			"color": "#8b5cf6"
+		},
+		{
+			"id": "sucreries",
+			"label": "Sucreries",
+			"color": "#e84393"
+		},
+		{
+			"id": "crepes",
+			"label": "Crêpes",
+			"color": "#edff00"
+		},
+		{
+			"id": "consignes",
+			"label": "Consignes",
+			"color": "#6b7280"
+		}
+	],
+	"products": [
+		{
+			"id": "the",
+			"name": "Thé",
+			"price": 100,
+			"category_id": "boisson-sans-alcool",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "cafe",
+			"name": "Café",
+			"price": 100,
+			"category_id": "boisson-sans-alcool",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "soda",
+			"name": "Soda",
+			"price": 200,
+			"category_id": "boisson-sans-alcool",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "jus-de-fruit",
+			"name": "Jus de fruit",
+			"price": 200,
+			"category_id": "boisson-sans-alcool",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "limonade",
+			"name": "Limonade",
+			"price": 200,
+			"category_id": "boisson-sans-alcool",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "biere-pichet",
+			"name": "Bière (pichet)",
+			"price": 1200,
+			"category_id": "alcool",
+			"available": true,
+			"fixed_price": true,
+			"vat": 20
+		},
+		{
+			"id": "biere-25cl",
+			"name": "Bière (25cl)",
+			"price": 300,
+			"category_id": "alcool",
+			"available": true,
+			"fixed_price": true,
+			"vat": 20
+		},
+		{
+			"id": "cidre-doux",
+			"name": "Cidre (DOUX)",
+			"price": 300,
+			"category_id": "alcool",
+			"available": true,
+			"fixed_price": true,
+			"vat": 20
+		},
+		{
+			"id": "cidre-brut",
+			"name": "Cidre (BRUT)",
+			"price": 300,
+			"category_id": "alcool",
+			"available": true,
+			"fixed_price": true,
+			"vat": 20
+		},
+		{
+			"id": "consigne-verre",
+			"name": "Consigne Verre",
+			"price": 100,
+			"category_id": "consignes",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "consigne-pichet",
+			"name": "Consigne Pichet",
+			"price": 500,
+			"category_id": "consignes",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "retour-consigne-verre",
+			"name": "RETOUR Consigne Verre",
+			"price": -100,
+			"category_id": "consignes",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "retour-consigne-pichet",
+			"name": "RETOUR Consigne Pichet",
+			"price": -500,
+			"category_id": "consignes",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "bonbon",
+			"name": "Bonbon/M&Ms/Twix",
+			"price": 100,
+			"category_id": "sucreries",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "cake-sucre",
+			"name": "Cake sucré",
+			"price": 100,
+			"category_id": "sucreries",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "cake-pomme-amandes",
+			"name": "Cake Pomme Amandes",
+			"price": 100,
+			"category_id": "sucreries",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "cake-pomme-canelle",
+			"name": "Cake Pomme Canelles",
+			"price": 100,
+			"category_id": "sucreries",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "cake-pomme-chocolat",
+			"name": "Cake Pomme Chocolat",
+			"price": 100,
+			"category_id": "sucreries",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "crepe-nature",
+			"name": "Crêpe Nature",
+			"price": 200,
+			"category_id": "crepes",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "crepe-sucre",
+			"name": "Crêpe Sucre",
+			"price": 250,
+			"category_id": "crepes",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "crepe-confiture",
+			"name": "Crêpe Confiture",
+			"price": 350,
+			"category_id": "crepes",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "crepe-caramel",
+			"name": "Crêpe Caramel",
+			"price": 350,
+			"category_id": "crepes",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "crepe-nutella",
+			"name": "Crêpe Nutella",
+			"price": 350,
+			"category_id": "crepes",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "crepe-speculoos",
+			"name": "Crêpe Spéculoos",
+			"price": 350,
+			"category_id": "crepes",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "cake-tomate-mozza",
+			"name": "Cake Tomate Mozza",
+			"price": 100,
+			"category_id": "cake-sale",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "cake-chorizo-poivrons",
+			"name": "Cake Chorizo Poivrons",
+			"price": 100,
+			"category_id": "cake-sale",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "cake-lardons-olives",
+			"name": "Cake Lardons Olives",
+			"price": 100,
+			"category_id": "cake-sale",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "sandwich-jambon-fromage",
+			"name": "Sandwich Jambon Fromage",
+			"price": 400,
+			"category_id": "sandwichs",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "sandwich-fromage-salade",
+			"name": "Sandwich Fromage Salade",
+			"price": 400,
+			"category_id": "sandwichs",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "panini-3-fromages",
+			"name": "Panini 3 fromages",
+			"price": 400,
+			"category_id": "sandwichs",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		},
+		{
+			"id": "panini-jambon-fromage",
+			"name": "Panini Jambon Fromage",
+			"price": 400,
+			"category_id": "sandwichs",
+			"available": true,
+			"fixed_price": true,
+			"vat": 5.5
+		}
+	],
+	"orders": [
+		{
+			"id": "snackbar-order-lunch",
+			"created_at": "2025-11-20T12:15:00Z",
+			"total": 500,
+			"vat_total": 28,
+			"payment_method": "card",
+			"weight": null,
+			"customer_details": "",
+			"items": [
+				{
+					"id": "snackbar-order-lunch-line-1",
+					"order_id": "snackbar-order-lunch",
+					"product_id": "panini-jambon-fromage",
+					"product_name": "Panini Jambon Fromage",
+					"unit_price": 400,
+					"quantity": 1,
+					"total": 400,
+					"comment": "",
+					"vat": 5.5
+				},
+				{
+					"id": "snackbar-order-lunch-line-2",
+					"order_id": "snackbar-order-lunch",
+					"product_id": "cafe",
+					"product_name": "Café",
+					"unit_price": 100,
+					"quantity": 1,
+					"total": 100,
+					"comment": "",
+					"vat": 5.5
+				}
+			]
+		},
+		{
+			"id": "snackbar-order-evening",
+			"created_at": "2025-11-18T19:30:00Z",
+			"total": 700,
+			"vat_total": 120,
+			"payment_method": "cash",
+			"weight": null,
+			"customer_details": "Table 4",
+			"items": [
+				{
+					"id": "snackbar-order-evening-line-1",
+					"order_id": "snackbar-order-evening",
+					"product_id": "biere-25cl",
+					"product_name": "Bière (25cl)",
+					"unit_price": 300,
+					"quantity": 2,
+					"total": 600,
+					"comment": "",
+					"vat": 20
+				},
+				{
+					"id": "snackbar-order-evening-line-2",
+					"order_id": "snackbar-order-evening",
+					"product_id": "consigne-verre",
+					"product_name": "Consigne Verre",
+					"unit_price": 100,
+					"quantity": 1,
+					"total": 100,
+					"comment": "",
+					"vat": 0
+				}
+			]
+		},
+		{
+			"id": "snackbar-order-crepe",
+			"created_at": "2025-11-15T16:45:00Z",
+			"total": 550,
+			"vat_total": 30,
+			"payment_method": "cash",
+			"weight": null,
+			"customer_details": "",
+			"items": [
+				{
+					"id": "snackbar-order-crepe-line-1",
+					"order_id": "snackbar-order-crepe",
+					"product_id": "crepe-nutella",
+					"product_name": "Crêpe Nutella",
+					"unit_price": 350,
+					"quantity": 1,
+					"total": 350,
+					"comment": "Sans sucre",
+					"vat": 5.5
+				},
+				{
+					"id": "snackbar-order-crepe-line-2",
+					"order_id": "snackbar-order-crepe",
+					"product_id": "jus-de-fruit",
+					"product_name": "Jus de fruit",
+					"unit_price": 200,
+					"quantity": 1,
+					"total": 200,
+					"comment": "",
+					"vat": 5.5
+				}
+			]
+		}
+	],
+	"configuration": {
+		"vat_enabled": "1"
+	}
+}

@@ -1,0 +1,259 @@
+{
+	"categories": [
+		{
+			"id": "hauts",
+			"label": "Hauts",
+			"color": "#3b82f6"
+		},
+		{
+			"id": "bas",
+			"label": "Bas",
+			"color": "#8b5cf6"
+		},
+		{
+			"id": "chaussures",
+			"label": "Chaussures",
+			"color": "#e8a735"
+		},
+		{
+			"id": "accessoires",
+			"label": "Accessoires",
+			"color": "#e84393"
+		},
+		{
+			"id": "services",
+			"label": "Services",
+			"color": "#6b7280"
+		}
+	],
+	"products": [
+		{
+			"id": "tshirt-base",
+			"name": "T-shirt basique",
+			"price": 1500,
+			"category_id": "hauts",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "chemise",
+			"name": "Chemise",
+			"price": 2500,
+			"category_id": "hauts",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "pull",
+			"name": "Pull / Sweat",
+			"price": 3000,
+			"category_id": "hauts",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "veste",
+			"name": "Veste / Manteau",
+			"price": 5000,
+			"category_id": "hauts",
+			"available": true,
+			"fixed_price": false,
+			"vat": 0
+		},
+		{
+			"id": "jean",
+			"name": "Jean",
+			"price": 3500,
+			"category_id": "bas",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "pantalon",
+			"name": "Pantalon",
+			"price": 3000,
+			"category_id": "bas",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "jupe",
+			"name": "Jupe",
+			"price": 2800,
+			"category_id": "bas",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "baskets",
+			"name": "Baskets",
+			"price": 4500,
+			"category_id": "chaussures",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "chaussures-ville",
+			"name": "Chaussures de ville",
+			"price": 6000,
+			"category_id": "chaussures",
+			"available": true,
+			"fixed_price": false,
+			"vat": 0
+		},
+		{
+			"id": "ceinture",
+			"name": "Ceinture",
+			"price": 1200,
+			"category_id": "accessoires",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "sac",
+			"name": "Sac",
+			"price": 2500,
+			"category_id": "accessoires",
+			"available": true,
+			"fixed_price": false,
+			"vat": 0
+		},
+		{
+			"id": "bonnet",
+			"name": "Bonnet / Écharpe",
+			"price": 1000,
+			"category_id": "accessoires",
+			"available": true,
+			"fixed_price": true,
+			"vat": 0
+		},
+		{
+			"id": "retouche",
+			"name": "Retouche",
+			"price": 500,
+			"category_id": "services",
+			"available": true,
+			"fixed_price": false,
+			"vat": 0
+		},
+		{
+			"id": "article-divers",
+			"name": "Article divers (prix libre)",
+			"price": 0,
+			"category_id": "services",
+			"available": true,
+			"fixed_price": false,
+			"vat": 0
+		}
+	],
+	"orders": [
+		{
+			"id": "clothing-order-outfit",
+			"created_at": "2025-11-22T11:00:00Z",
+			"total": 5000,
+			"vat_total": 0,
+			"payment_method": "card",
+			"weight": null,
+			"customer_details": "Marie Dupont",
+			"items": [
+				{
+					"id": "clothing-order-outfit-line-1",
+					"order_id": "clothing-order-outfit",
+					"product_id": "tshirt-base",
+					"product_name": "T-shirt basique",
+					"unit_price": 1500,
+					"quantity": 1,
+					"total": 1500,
+					"comment": "Taille M",
+					"vat": 0
+				},
+				{
+					"id": "clothing-order-outfit-line-2",
+					"order_id": "clothing-order-outfit",
+					"product_id": "jean",
+					"product_name": "Jean",
+					"unit_price": 3500,
+					"quantity": 1,
+					"total": 3500,
+					"comment": "Taille 40",
+					"vat": 0
+				}
+			]
+		},
+		{
+			"id": "clothing-order-open-price",
+			"created_at": "2025-11-19T15:20:00Z",
+			"total": 5700,
+			"vat_total": 0,
+			"payment_method": "cash",
+			"weight": null,
+			"customer_details": "",
+			"items": [
+				{
+					"id": "clothing-order-open-price-line-1",
+					"order_id": "clothing-order-open-price",
+					"product_id": "veste",
+					"product_name": "Veste / Manteau",
+					"unit_price": 4500,
+					"quantity": 1,
+					"total": 4500,
+					"comment": "Soldes −10 %",
+					"vat": 0
+				},
+				{
+					"id": "clothing-order-open-price-line-2",
+					"order_id": "clothing-order-open-price",
+					"product_id": "ceinture",
+					"product_name": "Ceinture",
+					"unit_price": 1200,
+					"quantity": 1,
+					"total": 1200,
+					"comment": "",
+					"vat": 0
+				}
+			]
+		},
+		{
+			"id": "clothing-order-service",
+			"created_at": "2025-11-14T10:30:00Z",
+			"total": 5000,
+			"vat_total": 0,
+			"payment_method": "check",
+			"weight": null,
+			"customer_details": "Chèque boutique",
+			"items": [
+				{
+					"id": "clothing-order-service-line-1",
+					"order_id": "clothing-order-service",
+					"product_id": "baskets",
+					"product_name": "Baskets",
+					"unit_price": 4500,
+					"quantity": 1,
+					"total": 4500,
+					"comment": "",
+					"vat": 0
+				},
+				{
+					"id": "clothing-order-service-line-2",
+					"order_id": "clothing-order-service",
+					"product_id": "retouche",
+					"product_name": "Retouche",
+					"unit_price": 500,
+					"quantity": 1,
+					"total": 500,
+					"comment": "Ourlet pantalon",
+					"vat": 0
+				}
+			]
+		}
+	],
+	"configuration": {}
+}

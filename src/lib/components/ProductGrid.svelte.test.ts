@@ -18,7 +18,8 @@ const products: Product[] = [
 		price: 150,
 		category_id: 'drinks',
 		available: true,
-		fixed_price: true
+		fixed_price: true,
+		vat: 0
 	},
 	{
 		id: 'p2',
@@ -26,7 +27,8 @@ const products: Product[] = [
 		price: 400,
 		category_id: 'food',
 		available: true,
-		fixed_price: false
+		fixed_price: false,
+		vat: 0
 	},
 	{
 		id: 'p3',
@@ -34,7 +36,8 @@ const products: Product[] = [
 		price: 100,
 		category_id: 'drinks',
 		available: false,
-		fixed_price: true
+		fixed_price: true,
+		vat: 0
 	}
 ];
 

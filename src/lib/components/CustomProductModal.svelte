@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { parseEurosToCents } from '#lib/money/index.ts';
 	import { t } from '#lib/i18n/index.ts';
+	import { vatEnabled } from '#lib/stores/app-config.ts';
+	import { isVatInRange, normalizeVat, parseVatInput } from '#lib/catalog/index.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
 	import { isBackdropClick } from '#lib/utils/modal.ts';
 	import AmountField from './AmountField.svelte';
 
 	interface Props {
-		onConfirm: (data: { name: string; priceCents: number }) => void;
+		onConfirm: (data: { name: string; priceCents: number; vat?: number }) => void;
 		onCancel: () => void;
 	}
 
@@ -14,15 +16,21 @@
 
 	let name = $state('');
 	let priceInput = $state('');
+	let vatInput = $state('0');
 
 	let priceCents = $derived(parseEurosToCents(priceInput));
-	let canConfirm = $derived(name.trim().length > 0);
+	let vat = $derived(parseVatInput(vatInput));
+	let canConfirm = $derived(name.trim().length > 0 && (!$vatEnabled || isVatInRange(vat)));
 
 	function handleSubmit() {
 		if (!canConfirm) {
 			return;
 		}
-		onConfirm({ name: name.trim(), priceCents });
+		onConfirm({
+			name: name.trim(),
+			priceCents,
+			vat: $vatEnabled ? normalizeVat(vat) : 0
+		});
 	}
 
 	function handleOverlayClick(event: MouseEvent) {
@@ -64,6 +72,22 @@
 			placeholder="0,00"
 			onValueChange={(v) => (priceInput = v)}
 		/>
+
+		{#if $vatEnabled}
+			<div class="mb-3">
+				<label class="form-label fw-semibold" for="custom-product-vat">
+					{$t('sales.customProductVat')}
+				</label>
+				<input
+					id="custom-product-vat"
+					class="form-control"
+					type="text"
+					inputmode="decimal"
+					bind:value={vatInput}
+					placeholder="0"
+				/>
+			</div>
+		{/if}
 
 		<div class="d-flex gap-2">
 			<button class="btn btn-secondary flex-fill fw-semibold" onclick={onCancel}>

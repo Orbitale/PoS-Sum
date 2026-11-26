@@ -24,8 +24,8 @@ export class Args {
 		return this.read(key, 'a string', (value) => typeof value === 'string', fallback);
 	}
 
-	integer(key: string): number {
-		return this.read<number>(key, 'an integer', Number.isSafeInteger);
+	integer(key: string, fallback?: number): number {
+		return this.read<number>(key, 'an integer', Number.isSafeInteger, fallback);
 	}
 
 	boolean(key: string, fallback?: boolean): boolean {
@@ -38,6 +38,15 @@ export class Args {
 			'a number',
 			(value) => value === null || typeof value === 'number',
 			null
+		);
+	}
+
+	number(key: string, fallback?: number): number {
+		return this.read<number>(
+			key,
+			'a number',
+			(value) => typeof value === 'number' && Number.isFinite(value),
+			fallback
 		);
 	}
 

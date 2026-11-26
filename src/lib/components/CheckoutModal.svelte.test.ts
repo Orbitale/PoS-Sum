@@ -10,6 +10,7 @@ function cartItem(partial: Partial<Product> & Pick<Product, 'id' | 'name' | 'pri
 			category_id: 'drinks',
 			available: true,
 			fixed_price: true,
+			vat: 0,
 			...partial
 		},
 		quantity: 2,

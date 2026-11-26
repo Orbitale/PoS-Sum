@@ -1,4 +1,5 @@
 import { version } from '../../../package.json';
+import { normalizeVat, orderVatCents, VAT_RANGE_MESSAGE } from '#lib/catalog/vat.ts';
 import type {
 	AppVersion,
 	Category,
@@ -29,7 +30,7 @@ import {
 	withTransaction
 } from './db.ts';
 import { BackendError } from './errors.ts';
-import { CONFIGURATION_DEFAULTS, DATASETS } from './seed.ts';
+import { CONFIGURATION_DEFAULTS, DATASETS, configurationOverrideKeys } from './seed.ts';
 
 /** Same order as SQLite's default collation, which compares strings byte by byte. */
 function compare(a: string, b: string): number {
@@ -52,6 +53,14 @@ async function assertCategoryExists(
 ): Promise<void> {
 	if (!(await exists(tx.objectStore('categories'), categoryId))) {
 		throw new BackendError(`${errorPrefix}: FOREIGN KEY constraint failed`);
+	}
+}
+
+function vatOrThrow(vat: number | undefined): number {
+	try {
+		return normalizeVat(vat);
+	} catch {
+		throw new BackendError(VAT_RANGE_MESSAGE);
 	}
 }
 
@@ -110,7 +119,9 @@ export async function updateCategory(payload: UpdateCategoryPayload): Promise<Ca
 
 export async function listProducts(): Promise<Product[]> {
 	const products = await getAll<Product>('products');
-	return products.sort((a, b) => compare(a.category_id, b.category_id) || compare(a.name, b.name));
+	return products
+		.map((product) => ({ ...product, vat: product.vat ?? 0 }))
+		.sort((a, b) => compare(a.category_id, b.category_id) || compare(a.name, b.name));
 }
 
 export async function createProduct(payload: CreateProductPayload): Promise<Product> {
@@ -120,7 +131,8 @@ export async function createProduct(payload: CreateProductPayload): Promise<Prod
 		price: payload.price,
 		category_id: payload.category_id,
 		available: true,
-		fixed_price: payload.fixed_price ?? true
+		fixed_price: payload.fixed_price ?? true,
+		vat: vatOrThrow(payload.vat)
 	};
 	return withTransaction(['categories', 'products'], 'readwrite', async (tx) => {
 		await assertCategoryExists(tx, product.category_id, 'Insert error');
@@ -136,7 +148,8 @@ export async function updateProduct(payload: UpdateProductPayload): Promise<Prod
 		price: payload.price,
 		category_id: payload.category_id,
 		available: payload.available,
-		fixed_price: payload.fixed_price
+		fixed_price: payload.fixed_price,
+		vat: vatOrThrow(payload.vat)
 	};
 	return withTransaction(['categories', 'products'], 'readwrite', async (tx) => {
 		const store = tx.objectStore('products');
@@ -211,7 +224,8 @@ export async function createOrder(payload: CreateOrderPayload): Promise<OrderWit
 			unit_price: item.unit_price,
 			quantity: item.quantity,
 			total: item.unit_price * item.quantity,
-			comment: item.comment ?? ''
+			comment: item.comment ?? '',
+			vat: vatOrThrow(item.vat)
 		};
 	});
 	const order: OrderWithItems = {
@@ -219,6 +233,7 @@ export async function createOrder(payload: CreateOrderPayload): Promise<OrderWit
 		// Without milliseconds, like the dates of the Tauri app: CSV exports show them verbatim.
 		created_at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
 		total: items.reduce((sum, item) => sum + item.total, 0),
+		vat_total: orderVatCents(items),
 		payment_method: payload.payment_method,
 		weight,
 		customer_details: payload.customer_details?.trim() ?? '',
@@ -261,7 +276,12 @@ export async function listOrders(): Promise<OrderWithItems[]> {
 	return orders
 		.reverse()
 		.sort((a, b) => compare(b.created_at, a.created_at))
-		.map((order) => ({ ...order, customer_details: order.customer_details ?? '' }));
+		.map((order) => ({
+			...order,
+			customer_details: order.customer_details ?? '',
+			vat_total: order.vat_total ?? orderVatCents(order.items),
+			items: order.items.map((item) => ({ ...item, vat: item.vat ?? 0 }))
+		}));
 }
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
@@ -308,18 +328,37 @@ export async function loadDefaultDataset(dataset: string): Promise<void> {
 	if (!Object.hasOwn(DATASETS, dataset)) {
 		throw new BackendError(`Unknown default dataset: ${dataset}`);
 	}
-	const { categories, products } = DATASETS[dataset];
+	const { categories, products, orders, configuration } = DATASETS[dataset];
+	const allowedConfig = configurationOverrideKeys();
+	for (const id of Object.keys(configuration)) {
+		if (!allowedConfig.has(id)) {
+			throw new BackendError(`Unknown configuration override: ${id}`);
+		}
+	}
 
-	await withTransaction(['categories', 'products'], 'readwrite', (tx) => {
-		const categoryStore = tx.objectStore('categories');
-		const productStore = tx.objectStore('products');
-		categoryStore.clear();
-		productStore.clear();
+	await withTransaction(['categories', 'products', 'orders', 'configuration'], 'readwrite', async (tx) => {
+		tx.objectStore('categories').clear();
+		tx.objectStore('products').clear();
+		tx.objectStore('orders').clear();
+
 		for (const category of categories) {
-			categoryStore.put(category);
+			tx.objectStore('categories').put(category);
 		}
 		for (const product of products) {
-			productStore.put(product);
+			tx.objectStore('products').put(product);
+		}
+		for (const order of orders) {
+			tx.objectStore('orders').add(order);
+		}
+
+		await ensureConfigurationDefaults(tx.objectStore('configuration'));
+		const configStore = tx.objectStore('configuration');
+		for (const [id, value] of Object.entries(configuration)) {
+			const entry: ConfigurationEntry | undefined = await promisify(configStore.get(id));
+			if (!entry) {
+				throw new BackendError(`Configuration not found: ${id}`);
+			}
+			configStore.put({ ...entry, value });
 		}
 	});
 }

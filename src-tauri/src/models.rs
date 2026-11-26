@@ -79,6 +79,7 @@ pub struct Product {
     pub available: bool,
     /// When false, the price is only a suggestion and can be changed on each order.
     pub fixed_price: bool,
+    pub vat: f64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -88,6 +89,8 @@ pub struct CreateProductPayload {
     pub category_id: String,
     #[serde(default = "default_true")]
     pub fixed_price: bool,
+    #[serde(default)]
+    pub vat: f64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -98,6 +101,8 @@ pub struct UpdateProductPayload {
     pub category_id: String,
     pub available: bool,
     pub fixed_price: bool,
+    #[serde(default)]
+    pub vat: f64,
 }
 
 fn default_true() -> bool {
@@ -110,6 +115,9 @@ pub struct Order {
     /// ISO-8601, UTC.
     pub created_at: String,
     pub total: i64,
+    /// Total VAT in cents (sum of raw line VAT, rounded once at checkout).
+    #[serde(default)]
+    pub vat_total: i64,
     pub payment_method: PaymentMethod,
     pub weight: Option<f64>,
     #[serde(default)]
@@ -128,6 +136,8 @@ pub struct OrderItem {
     pub total: i64,
     #[serde(default)]
     pub comment: String,
+    #[serde(default)]
+    pub vat: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -164,6 +174,8 @@ pub struct CreateOrderItemPayload {
     pub quantity: i64,
     #[serde(default)]
     pub comment: String,
+    #[serde(default)]
+    pub vat: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

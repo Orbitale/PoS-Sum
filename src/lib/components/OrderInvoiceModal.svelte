@@ -3,6 +3,8 @@
 	import { formatPrice } from '#lib/utils/format.ts';
 	import { shopName, companyAddress } from '#lib/stores/app-config.ts';
 	import { t } from '#lib/i18n/index.ts';
+	import { vatEnabled } from '#lib/stores/app-config.ts';
+	import { formatVatAmount } from '#lib/catalog/index.ts';
 	import { isBackdropClick } from '#lib/utils/modal.ts';
 
 	interface Props {
@@ -83,6 +85,9 @@
 					<tr>
 						<th class="text-uppercase small">{$t('orders.colProduct')}</th>
 						<th class="text-uppercase small text-end text-nowrap">{$t('orders.colQty')}</th>
+						{#if $vatEnabled}
+							<th class="text-uppercase small text-end text-nowrap">{$t('orders.colVat')}</th>
+						{/if}
 						<th class="text-uppercase small text-end text-nowrap">{$t('orders.colUnitPrice')}</th>
 						<th class="text-uppercase small text-end text-nowrap">{$t('orders.colSubtotal')}</th>
 					</tr>
@@ -97,14 +102,23 @@
 								{/if}
 							</td>
 							<td class="text-end text-nowrap">{item.quantity}</td>
+							{#if $vatEnabled}
+								<td class="text-end text-nowrap">{formatVatAmount(item.total, item.vat)}</td>
+							{/if}
 							<td class="text-end text-nowrap">{formatPrice(item.unit_price)}</td>
 							<td class="text-end text-nowrap">{formatPrice(item.total)}</td>
 						</tr>
 					{/each}
 				</tbody>
 				<tfoot>
+					{#if $vatEnabled}
+						<tr>
+							<th colspan={4} class="text-end">{$t('orders.invoice.vatTotal')}</th>
+							<th class="text-end text-nowrap">{formatPrice(order.vat_total)}</th>
+						</tr>
+					{/if}
 					<tr>
-						<th colspan="3" class="text-end">{$t('orders.invoice.total')}</th>
+						<th colspan={$vatEnabled ? 4 : 3} class="text-end">{$t('orders.invoice.total')}</th>
 						<th class="text-end text-nowrap">{formatPrice(order.total)}</th>
 					</tr>
 				</tfoot>

@@ -3,6 +3,8 @@
 	import { formatCentsToInput, parseEurosToCents } from '#lib/money/index.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
 	import { t } from '#lib/i18n/index.ts';
+	import { vatEnabled } from '#lib/stores/app-config.ts';
+	import { formatVatRate } from '#lib/catalog/index.ts';
 	import AmountField from './AmountField.svelte';
 
 	interface Props {
@@ -59,6 +61,15 @@
 				<h2 class="h5">{$t('checkout.title')}</h2>
 
 				<table class="table table-hover table-bordered" style="font-size:0.95rem">
+					<thead>
+						<tr>
+							<th class="small text-muted">{$t('checkout.colProduct')}</th>
+							{#if $vatEnabled}
+								<th class="small text-muted text-end text-nowrap">{$t('checkout.colVat')}</th>
+							{/if}
+							<th class="small text-muted text-end text-nowrap">{$t('checkout.colSubtotal')}</th>
+						</tr>
+					</thead>
 					<tbody>
 						{#each items as item (item.product.id)}
 							<tr>
@@ -68,15 +79,20 @@
 										<div class="small text-muted fst-italic">{item.comment}</div>
 									{/if}
 								</td>
-								<td>{formatPrice(item.unitPrice * item.quantity)}</td>
+								{#if $vatEnabled}
+									<td class="text-end text-nowrap">{formatVatRate(item.product.vat)}</td>
+								{/if}
+								<td class="text-end text-nowrap">{formatPrice(item.unitPrice * item.quantity)}</td>
 							</tr>
 						{/each}
 						<tr class="table-info">
-							<td><strong>{$t('checkout.numberOfProducts')}</strong></td>
+							<td colspan={$vatEnabled ? 2 : 1}>
+								<strong>{$t('checkout.numberOfProducts')}</strong>
+							</td>
 							<td><strong>{numberOfProducts}</strong></td>
 						</tr>
 						<tr class="table-success">
-							<td><strong>{$t('checkout.total')}</strong></td>
+							<td colspan={$vatEnabled ? 2 : 1}><strong>{$t('checkout.total')}</strong></td>
 							<td><strong>{formatPrice(total)}</strong></td>
 						</tr>
 					</tbody>

@@ -11,6 +11,8 @@
 	import { formatPrice } from '#lib/utils/format.ts';
 	import ProductFormModal from '#lib/components/ProductFormModal.svelte';
 	import { t } from '#lib/i18n/index.ts';
+	import { vatEnabled } from '#lib/stores/app-config.ts';
+	import { formatVatRate } from '#lib/catalog/index.ts';
 
 	let products = $state<Product[]>([]);
 	let categories = $state<Category[]>([]);
@@ -61,6 +63,7 @@
 		category_id: string;
 		available: boolean;
 		fixed_price: boolean;
+		vat: number;
 	}) {
 		try {
 			if (editingProduct) {
@@ -70,7 +73,8 @@
 					price: data.price,
 					category_id: data.category_id,
 					available: data.available,
-					fixed_price: data.fixed_price
+					fixed_price: data.fixed_price,
+					vat: data.vat
 				};
 				await api_call<Product>('update_product', { payload });
 			} else {
@@ -78,7 +82,8 @@
 					name: data.name,
 					price: data.price,
 					category_id: data.category_id,
-					fixed_price: data.fixed_price
+					fixed_price: data.fixed_price,
+					vat: data.vat
 				};
 				await api_call<Product>('create_product', { payload });
 			}
@@ -151,6 +156,9 @@
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colName')}</th>
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colPrice')}</th>
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colFixedPrice')}</th>
+						{#if $vatEnabled}
+							<th scope="col" class="small text-muted fw-semibold">{$t('products.colVat')}</th>
+						{/if}
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colCategory')}</th>
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colAvailable')}</th>
 						<th scope="col" class="small text-muted fw-semibold">{$t('products.colActions')}</th>
@@ -164,6 +172,9 @@
 							<td>
 								{product.fixed_price ? $t('products.fixedPrice') : $t('products.openPrice')}
 							</td>
+							{#if $vatEnabled}
+								<td>{formatVatRate(product.vat)}</td>
+							{/if}
 							<td>
 								<span
 									class="badge"

@@ -11,6 +11,7 @@ function product(partial: Partial<Product> & Pick<Product, 'id' | 'name' | 'pric
 		category_id: 'drinks',
 		available: true,
 		fixed_price: true,
+		vat: 0,
 		...partial
 	};
 }

@@ -5,7 +5,8 @@
 	import { canEditCartUnitPrice, isOpenPriceForTotal } from '#lib/catalog/index.ts';
 	import { formatPrice } from '#lib/utils/format.ts';
 	import { t } from '#lib/i18n/index.ts';
-	import { orderWeightEnabled } from '#lib/stores/app-config.ts';
+	import { orderWeightEnabled, vatEnabled } from '#lib/stores/app-config.ts';
+	import { formatVatRate } from '#lib/catalog/index.ts';
 	import PriceEditModal from './PriceEditModal.svelte';
 	import CommentEditModal from './CommentEditModal.svelte';
 
@@ -108,6 +109,9 @@
 									</span>
 								{/if}
 								<span class="small text-muted">{formatPrice(item.unitPrice)}</span>
+								{#if $vatEnabled}
+									<span class="small text-muted">· {formatVatRate(item.product.vat)}</span>
+								{/if}
 							</div>
 						</td>
 						<td class="col-sm-3">
